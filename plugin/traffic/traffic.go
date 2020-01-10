@@ -6,12 +6,15 @@ import (
 	"sync"
 	"time"
 
+	clog "github.com/coredns/coredns/pkg/log"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/response"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
 )
+
+var log = clog.NewWithPlugin("traffic")
 
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
