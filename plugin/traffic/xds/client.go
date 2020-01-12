@@ -23,7 +23,6 @@ package xds
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/coredns/coredns/plugin/traffic/xds/bootstrap"
 
@@ -49,10 +48,7 @@ type Client struct {
 	cc   *grpc.ClientConn // Connection to the xDS server
 	v2c  *v2Client        // Actual xDS client implementation using the v2 API
 
-	mu              sync.Mutex
 	serviceCallback func(ServiceUpdate, error)
-	ldsCancel       func()
-	rdsCancel       func()
 }
 
 // New returns a new xdsClient configured with opts.
@@ -99,7 +95,7 @@ func (c *Client) WatchCluster(clusterName string, cdsCb func(CDSUpdate, error)) 
 	return c.v2c.watchCDS(clusterName, cdsCb)
 }
 
-// WatchEDS watches the ghost.
-func (c *Client) WatchEDS(clusterName string, edsCb func(*EDSUpdate, error)) (cancel func()) {
+// WatchEndpoints uses EDS to discover information about the endpoints in a cluster.
+func (c *Client) WatchEndpoints(clusterName string, edsCb func(*EDSUpdate, error)) (cancel func()) {
 	return c.v2c.watchEDS(clusterName, edsCb)
 }

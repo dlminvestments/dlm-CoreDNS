@@ -27,12 +27,13 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/coredns/coredns/plugin/pkg/log"
+
+	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/google"
 	"google.golang.org/grpc/grpclog"
-
-	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
 const (
@@ -98,26 +99,23 @@ type xdsServer struct {
 // the presence of the errors) and may return a Config object with certain
 // fields left unspecified, in which case the caller should use some sane
 // defaults.
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	config := &Config{}
 
 	fName, ok := os.LookupEnv(fileEnv)
 	if !ok {
-		grpclog.Errorf("xds: %s environment variable not set", fileEnv)
-		return config
+		return config, fmt.Errorf("xds: %s environment variable not set", fileEnv)
 	}
 
 	grpclog.Infof("xds: Reading bootstrap file from %s", fName)
 	data, err := fileReadFunc(fName)
 	if err != nil {
-		grpclog.Errorf("xds: bootstrap file {%v} read failed: %v", fName, err)
-		return config
+		return config, fmt.Errorf("xds: bootstrap file {%v} read failed: %v", fName, err)
 	}
 
 	var jsonData map[string]json.RawMessage
 	if err := json.Unmarshal(data, &jsonData); err != nil {
-		grpclog.Errorf("xds: json.Unmarshal(%v) failed during bootstrap: %v", string(data), err)
-		return config
+		return config, fmt.Errorf("xds: json.Unmarshal(%v) failed during bootstrap: %v", string(data), err)
 	}
 
 	m := jsonpb.Unmarshaler{AllowUnknownFields: true}
@@ -126,18 +124,18 @@ func NewConfig() *Config {
 		case "node":
 			n := &corepb.Node{}
 			if err := m.Unmarshal(bytes.NewReader(v), n); err != nil {
-				grpclog.Errorf("xds: jsonpb.Unmarshal(%v) for field %q failed during bootstrap: %v", string(v), k, err)
+				log.Errorf("xds: jsonpb.Unmarshal(%v) for field %q failed during bootstrap: %v", string(v), k, err)
 				break
 			}
 			config.NodeProto = n
 		case "xds_servers":
 			var servers []*xdsServer
 			if err := json.Unmarshal(v, &servers); err != nil {
-				grpclog.Errorf("xds: json.Unmarshal(%v) for field %q failed during bootstrap: %v", string(v), k, err)
+				log.Errorf("xds: json.Unmarshal(%v) for field %q failed during bootstrap: %v", string(v), k, err)
 				break
 			}
 			if len(servers) < 1 {
-				grpclog.Errorf("xds: bootstrap file parsing failed during bootstrap: file doesn't contain any xds server to connect to")
+				log.Errorf("xds: bootstrap file parsing failed during bootstrap: file doesn't contain any xds server to connect to")
 				break
 			}
 			xs := servers[0]
@@ -151,7 +149,7 @@ func NewConfig() *Config {
 			}
 		default:
 			// Do not fail the xDS bootstrap when an unknown field is seen.
-			grpclog.Warningf("xds: unexpected data in bootstrap file: {%v, %v}", k, string(v))
+			log.Warningf("xds: unexpected data in bootstrap file: {%v, %v}", k, string(v))
 		}
 	}
 
@@ -163,6 +161,5 @@ func NewConfig() *Config {
 	}
 	config.NodeProto.BuildVersion = gRPCVersion
 
-	grpclog.Infof("xds: bootstrap.NewConfig returning: %+v", config)
-	return config
+	return config, nil
 }

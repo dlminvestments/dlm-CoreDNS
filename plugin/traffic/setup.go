@@ -21,8 +21,14 @@ func setup(c *caddy.Controller) error {
 		return plugin.Error("traffic", err)
 	}
 
+	t, err := New()
+	if err != nil {
+		return plugin.Error("traffic", err)
+	}
+
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
-		return &Traffic{Next: next, assignments: make(map[string]assignment)}
+		t.Next = next
+		return t
 	})
 
 	return nil

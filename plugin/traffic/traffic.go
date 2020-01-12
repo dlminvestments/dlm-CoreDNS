@@ -3,37 +3,43 @@ package traffic
 import (
 	"context"
 	"math/rand"
-	"sync"
 	"time"
 
-	clog "github.com/coredns/coredns/pkg/log"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/response"
-	"github.com/coredns/coredns/request"
+	"github.com/coredns/coredns/plugin/traffic/xds"
+	"github.com/coredns/coredns/plugin/traffic/xds/bootstrap"
 
 	"github.com/miekg/dns"
 )
 
-var log = clog.NewWithPlugin("traffic")
-
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
-	assignments map[string]assignment // zone -> assignment
-	mu          sync.RWMutex          // protects assignments
-	Next        plugin.Handler
+	c    *xds.Client
+	Next plugin.Handler
+}
+
+// New returns a pointer to a new and initialized Traffic.
+func New() (*Traffic, error) {
+	config, err := bootstrap.NewConfig()
+	if err != nil {
+		return nil, err
+	}
+	c, err := xds.New(xds.Options{Config: *config})
+	if err != nil {
+		return nil, err
+	}
+
+	return &Traffic{c: c}, nil
+}
+
+func (t *Traffic) Close() {
+	t.c.Close()
 }
 
 // ServeDNS implements the plugin.Handler interface.
 func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	state := request.Request{W: w, Req: r}
-
 	tw := &ResponseWriter{ResponseWriter: w}
-	t.mu.RLock()
-	a, ok := t.assignments[state.Name()]
-	t.mu.RUnlock()
-	if ok {
-		tw.a = &a
-	}
 	return plugin.NextOrFailure(t.Name(), t.Next, ctx, tw, r)
 }
 
@@ -43,7 +49,6 @@ func (t *Traffic) Name() string { return "traffic" }
 // ResponseWriter writes a traffic load balanced response.
 type ResponseWriter struct {
 	dns.ResponseWriter
-	a *assignment
 }
 
 // WriteMsg implements the dns.ResponseWriter interface.
@@ -62,10 +67,6 @@ func (r *ResponseWriter) WriteMsg(res *dns.Msg) error {
 		return r.ResponseWriter.WriteMsg(res)
 	}
 
-	// ok, traffic-lb
-	if r.a != nil {
-
-	}
 	if len(res.Answer) > 1 {
 		res.Answer = []dns.RR{res.Answer[rand.Intn(len(res.Answer))]}
 		res.Answer[0].Header().Ttl = 5
