@@ -42,6 +42,17 @@ Findign the xDS endpoint.
 traffic
 ~~~
 
+The extended syntax:
+
+~~~
+traffic {
+    server grpc://dsdsd <creds>
+    id ID
+ }
+~~~
+
+* id **ID** is how *traffic* identifies itself to the control plane.
+
 This enables traffic load balancing for all (sub-)domains named in the server block.
 
 ## Examples

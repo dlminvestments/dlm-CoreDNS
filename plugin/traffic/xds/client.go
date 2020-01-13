@@ -69,6 +69,8 @@ func New(opts Options) (*Client, error) {
 		return nil, fmt.Errorf("xds: failed to dial balancer {%s}: %v", opts.Config.BalancerName, err)
 	}
 
+	println("dialed balancer at", opts.Config.BalancerName)
+
 	c := &Client{
 		opts: opts,
 		cc:   cc,
@@ -83,6 +85,10 @@ func (c *Client) Close() {
 	// the client is closed?
 	c.v2c.close()
 	c.cc.Close()
+}
+
+func (c *Client) Run() {
+	c.v2c.run()
 }
 
 // ServiceUpdate contains update about the service.

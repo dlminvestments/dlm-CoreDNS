@@ -127,12 +127,14 @@ func (v2c *v2Client) run() {
 		}
 
 		retries++
+		println("SENDING STUFF, retries", retries)
 		cli := adsgrpc.NewAggregatedDiscoveryServiceClient(v2c.cc)
-		stream, err := cli.StreamAggregatedResources(v2c.ctx, grpc.WaitForReady(true))
+		stream, err := cli.StreamAggregatedResources(v2c.ctx) //, grpc.WaitForReady(true))
 		if err != nil {
 			log.Infof("xds: ADS stream creation failed: %v", err)
 			continue
 		}
+		println("created ads stream")
 
 		// send() could be blocked on reading updates from the different update
 		// channels when it is not actually sending out messages. So, we need a
@@ -143,11 +145,12 @@ func (v2c *v2Client) run() {
 		if v2c.recv(stream) {
 			retries = 0
 		}
+		println("sending has succeeded")
 		close(done)
 	}
 }
 
-// sendRequest sends a request for provided typeURL and resource on the provided
+// endRequest sends a request for provided typeURL and resource on the provided
 // stream.
 //
 // version is the ack version to be sent with the request
@@ -261,8 +264,11 @@ func (v2c *v2Client) processAckInfo(t *ackInfo) (target []string, typeURL, versi
 // on the provided ADS stream.
 func (v2c *v2Client) send(stream adsStream, done chan struct{}) {
 	if !v2c.sendExisting(stream) {
+		println("not existing stream")
 		return
 	}
+
+	println("in send")
 
 	for {
 		select {
@@ -278,8 +284,10 @@ func (v2c *v2Client) send(stream adsStream, done chan struct{}) {
 			)
 			switch t := u.(type) {
 			case *watchInfo:
+				println("watchInfo")
 				target, typeURL, version, nonce, send = v2c.processWatchInfo(t)
 			case *ackInfo:
+				println("ackInfo")
 				target, typeURL, version, nonce, send = v2c.processAckInfo(t)
 			}
 			if !send {
@@ -367,7 +375,9 @@ func (v2c *v2Client) watchEDS(clusterName string, edsCb edsCallback) (cancel fun
 }
 
 func (v2c *v2Client) watch(wi *watchInfo) (cancel func()) {
+	println("watch")
 	v2c.sendCh.Put(wi)
+	println("returning from watch")
 	return func() {
 		v2c.mu.Lock()
 		defer v2c.mu.Unlock()

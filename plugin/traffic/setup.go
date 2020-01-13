@@ -7,6 +7,7 @@ import (
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	"github.com/coredns/coredns/plugin/traffic/xds"
 
 	"github.com/caddyserver/caddy"
 )
@@ -30,6 +31,8 @@ func setup(c *caddy.Controller) error {
 		t.Next = next
 		return t
 	})
+
+	t.c.WatchCluster("xds_experimental", func(xds.CDSUpdate, error) {})
 
 	return nil
 }
