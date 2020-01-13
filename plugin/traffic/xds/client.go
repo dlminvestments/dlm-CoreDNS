@@ -57,12 +57,17 @@ func New(opts Options) (*Client, error) {
 	case opts.Config.BalancerName == "":
 		return nil, errors.New("xds: no xds_server name provided in options")
 	case opts.Config.Creds == nil:
-		return nil, errors.New("xds: no credentials provided in options")
+		fmt.Printf("%s\n", errors.New("xds: no credentials provided in options"))
 	case opts.Config.NodeProto == nil:
 		return nil, errors.New("xds: no node_proto provided in options")
 	}
 
-	dopts := append([]grpc.DialOption{opts.Config.Creds}, opts.DialOpts...)
+	var dopts []grpc.DialOption
+	if opts.Config.Creds == nil {
+		dopts = append([]grpc.DialOption{grpc.WithInsecure()}, opts.DialOpts...)
+	} else {
+		dopts = append([]grpc.DialOption{opts.Config.Creds}, opts.DialOpts...)
+	}
 	cc, err := grpc.Dial(opts.Config.BalancerName, dopts...)
 	if err != nil {
 		// An error from a non-blocking dial indicates something serious.
