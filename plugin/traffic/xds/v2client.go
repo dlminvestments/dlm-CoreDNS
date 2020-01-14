@@ -115,7 +115,7 @@ func (v2c *v2Client) run() {
 		}
 
 		if retries != 0 {
-			t := time.NewTimer(v2c.backoff(retries))
+			t := time.NewTimer(1 * time.Second) // backoff bla bla.
 			select {
 			case <-t.C:
 			case <-v2c.ctx.Done():
@@ -127,14 +127,12 @@ func (v2c *v2Client) run() {
 		}
 
 		retries++
-		println("SENDING STUFF, retries", retries)
 		cli := adsgrpc.NewAggregatedDiscoveryServiceClient(v2c.cc)
 		stream, err := cli.StreamAggregatedResources(v2c.ctx) //, grpc.WaitForReady(true))
 		if err != nil {
 			log.Infof("xds: ADS stream creation failed: %v", err)
 			continue
 		}
-		println("created ads stream")
 
 		// send() could be blocked on reading updates from the different update
 		// channels when it is not actually sending out messages. So, we need a
@@ -145,7 +143,6 @@ func (v2c *v2Client) run() {
 		if v2c.recv(stream) {
 			retries = 0
 		}
-		println("sending has succeeded")
 		close(done)
 	}
 }
@@ -286,6 +283,8 @@ func (v2c *v2Client) send(stream adsStream, done chan struct{}) {
 			case *watchInfo:
 				println("watchInfo")
 				target, typeURL, version, nonce, send = v2c.processWatchInfo(t)
+				println(target, typeURL, version, nonce, send)
+				fmt.Printf("%+v\n", target)
 			case *ackInfo:
 				println("ackInfo")
 				target, typeURL, version, nonce, send = v2c.processAckInfo(t)
@@ -305,19 +304,25 @@ func (v2c *v2Client) send(stream adsStream, done chan struct{}) {
 // recv receives xDS responses on the provided ADS stream and branches out to
 // message specific handlers.
 func (v2c *v2Client) recv(stream adsStream) bool {
+	println("v2 recv")
 	success := false
 	for {
+		println("WATIIGNM")
 		resp, err := stream.Recv()
 		// TODO: call watch callbacks with error when stream is broken.
+		println("DONE")
 		if err != nil {
 			log.Warningf("xds: ADS stream recv failed: %v", err)
 			return success
 		}
+		println("RECEIVING")
 		var respHandleErr error
 		switch resp.GetTypeUrl() {
 		case cdsURL:
+			println("CDS")
 			respHandleErr = v2c.handleCDSResponse(resp)
 		case edsURL:
+			println("EDS")
 			respHandleErr = v2c.handleEDSResponse(resp)
 		default:
 			log.Warningf("xds: unknown response URL type: %v", resp.GetTypeUrl())
@@ -375,9 +380,7 @@ func (v2c *v2Client) watchEDS(clusterName string, edsCb edsCallback) (cancel fun
 }
 
 func (v2c *v2Client) watch(wi *watchInfo) (cancel func()) {
-	println("watch")
 	v2c.sendCh.Put(wi)
-	println("returning from watch")
 	return func() {
 		v2c.mu.Lock()
 		defer v2c.mu.Unlock()
@@ -399,6 +402,7 @@ func (v2c *v2Client) watch(wi *watchInfo) (cancel func()) {
 // Caller should hold v2c.mu
 func (v2c *v2Client) checkCacheAndUpdateWatchMap(wi *watchInfo) {
 	if existing := v2c.watchMap[wi.typeURL]; existing != nil {
+		println("cancel")
 		existing.cancel()
 	}
 
@@ -408,7 +412,10 @@ func (v2c *v2Client) checkCacheAndUpdateWatchMap(wi *watchInfo) {
 	// we need to access the watchInfo, which is stored in the watchMap.
 	case cdsURL:
 		clusterName := wi.target[0]
+		println("CDS URLS", clusterName)
 		if update, ok := v2c.cdsCache[clusterName]; ok {
+			println("UPDATE SEEN, ok")
+
 			var err error
 			if v2c.watchMap[cdsURL] == nil {
 				err = fmt.Errorf("xds: no CDS watcher found when handling CDS watch for cluster {%v} from cache", clusterName)

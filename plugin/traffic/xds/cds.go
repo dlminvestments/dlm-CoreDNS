@@ -28,6 +28,7 @@ import (
 // handleCDSResponse processes an CDS response received from the xDS server. On
 // receipt of a good response, it also invokes the registered watcher callback.
 func (v2c *v2Client) handleCDSResponse(resp *xdspb.DiscoveryResponse) error {
+	println("handlCDSResponse")
 	v2c.mu.Lock()
 	defer v2c.mu.Unlock()
 
@@ -47,6 +48,7 @@ func (v2c *v2Client) handleCDSResponse(resp *xdspb.DiscoveryResponse) error {
 		if !ok {
 			return fmt.Errorf("xds: unexpected resource type: %T in CDS response", resource.Message)
 		}
+		fmt.Printf("CLUSTER %+v\n", cluster)
 		update, err := validateCluster(cluster)
 		if err != nil {
 			return err

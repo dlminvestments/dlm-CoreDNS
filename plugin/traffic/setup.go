@@ -1,6 +1,7 @@
 package traffic
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -32,7 +33,8 @@ func setup(c *caddy.Controller) error {
 		return t
 	})
 
-	t.c.WatchCluster("xds_experimental", func(xds.CDSUpdate, error) {})
+	t.c.WatchCluster("", func(x xds.CDSUpdate, _ error) { fmt.Printf("CDSUpdate: %+v\n", x) })
+	t.c.WatchEndpoints("", func(x *xds.EDSUpdate, _ error) { fmt.Printf("EDSUpdate: %+v\n", x) })
 
 	return nil
 }

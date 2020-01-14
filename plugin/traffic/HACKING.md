@@ -26,14 +26,15 @@ $ cd ~/src/github.com/envoyproxy/go-control-plane
 % make integration.xds
 ~~~
 
-This runs a binary from pkg/test/main. Now we're testing xDS, but there is also aDS (which does
-everything including xDS). I'm still figuring out what do to here.
+This runs a binary from pkg/test/main. Now we're testing aDS.
 
 The script stops, unless you have Envoy installed (which I haven't), but you can run it manually:
 
 ~~~ sh
-./bin/test --xds=xds --runtimes=1 -debug  # for xds
+./bin/test --xds=ads --runtimes=2 -debug  # for ads
 ~~~
 
 This fails with `timeout waiting for the first request`, means you're consumer wasn't quick enough
 in asking for xDS assignments.
+
+Use insecure.
