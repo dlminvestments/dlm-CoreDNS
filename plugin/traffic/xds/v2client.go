@@ -115,7 +115,7 @@ func (v2c *v2Client) run() {
 		}
 
 		if retries != 0 {
-			t := time.NewTimer(1 * time.Second) // backoff bla bla.
+			t := time.NewTimer(v2c.backoff(retries))
 			select {
 			case <-t.C:
 			case <-v2c.ctx.Done():
@@ -165,6 +165,7 @@ func (v2c *v2Client) sendRequest(stream adsStream, resourceNames []string, typeU
 		ResponseNonce: nonce,
 		// TODO: populate ErrorDetails for nack.
 	}
+	println("v2: sendrequest", typeURL)
 	if err := stream.Send(req); err != nil {
 		log.Warningf("xds: request (type %s) for resource %v failed: %v", typeURL, resourceNames, err)
 		return false
@@ -180,6 +181,7 @@ func (v2c *v2Client) sendRequest(stream adsStream, resourceNames []string, typeU
 // quickly (once it pushes the message onto the transport layer) and is only
 // ever blocked if we don't have enough flow control quota.
 func (v2c *v2Client) sendExisting(stream adsStream) bool {
+	println("v2: sendexisting")
 	v2c.mu.Lock()
 	defer v2c.mu.Unlock()
 

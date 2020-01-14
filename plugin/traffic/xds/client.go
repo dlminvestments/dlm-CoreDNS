@@ -23,6 +23,7 @@ package xds
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/coredns/coredns/plugin/traffic/xds/bootstrap"
 
@@ -79,7 +80,7 @@ func New(opts Options) (*Client, error) {
 	c := &Client{
 		opts: opts,
 		cc:   cc,
-		v2c:  newV2Client(cc, opts.Config.NodeProto, nil), // todo re-add backoff (exponential)
+		v2c:  newV2Client(cc, opts.Config.NodeProto, func(int) time.Duration { return 0 }),
 	}
 	return c, nil
 }
