@@ -1,7 +1,6 @@
 package xds
 
 import (
-	"fmt"
 	"math/rand"
 	"net"
 	"sync"
@@ -28,7 +27,6 @@ func (a assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterL
 	if cla == nil {
 		return
 	}
-	fmt.Printf("%+v\n", cla)
 	log.Debugf("Updating cluster %q", cluster)
 	a.cla[cluster] = cla
 
