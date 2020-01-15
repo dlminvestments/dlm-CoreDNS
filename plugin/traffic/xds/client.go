@@ -23,6 +23,7 @@ package xds
 import (
 	"context"
 	"sync"
+	"time"
 
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 
@@ -33,7 +34,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = clog.NewWithPlugin("traffic")
+var log = clog.NewWithPlugin("traffic xds:")
 
 const (
 	cdsURL = "type.googleapis.com/envoy.api.v2.Cluster"
@@ -48,6 +49,7 @@ type Client struct {
 	assignments assignment
 	node        *corepb.Node
 	cancel      context.CancelFunc
+	stop        chan struct{}
 }
 
 type assignment struct {
@@ -141,7 +143,8 @@ func (c *Client) Receive(stream adsStream) error {
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
-			return err
+			log.Warningf("Trouble receiving from the gRPC connection: %s", err)
+			time.Sleep(1 * time.Second) // better.
 		}
 
 		switch resp.GetTypeUrl() {
@@ -157,13 +160,13 @@ func (c *Client) Receive(stream adsStream) error {
 				}
 				c.assignments.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
-			println("HERER", len(resp.GetResources()))
+			println("CDS", len(resp.GetResources()), "processed")
 			log.Debug("Cluster discovery processed with %d resources", len(resp.GetResources()))
 			// ack the CDS proto, with we we've got. (empty version would be NACK)
 			if err := c.ClusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), c.assignments.Clusters()); err != nil {
 				log.Warningf("Failed to acknowledge cluster discovery: %s", err)
 			}
-			// need to figure out how to handle the version exactly.
+			// need to figure out how to handle the versions and nounces exactly.
 
 			// now kick off discovery for endpoints
 			if err := c.EndpointDiscovery(stream, "", "", c.assignments.Clusters()); err != nil {
@@ -171,7 +174,23 @@ func (c *Client) Receive(stream adsStream) error {
 			}
 
 		case edsURL:
-			println("EDS")
+			for _, r := range resp.GetResources() {
+				var any ptypes.DynamicAny
+				if err := ptypes.UnmarshalAny(r, &any); err != nil {
+					log.Debugf("Failed to unmarshal endpoint discovery: %s", err)
+					continue
+				}
+				cla, ok := any.Message.(*xdspb.ClusterLoadAssignment)
+				if !ok {
+					log.Debugf("Unexpected resource type: %T in endpoint discovery", any.Message)
+					continue
+				}
+				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
+				// ack the bloody thing
+			}
+			println("EDS", len(resp.GetResources()), "processed")
+			log.Debug("Endpoint discovery processed with %d resources", len(resp.GetResources()))
+
 		default:
 			log.Warningf("Unknown response URL for discovery: %q", resp.GetTypeUrl())
 			continue
