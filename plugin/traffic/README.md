@@ -114,3 +114,13 @@ will be stripped. You can optionally sign responses on the fly by using the *dns
 
 * wording: cluster, endpoints, assignments, service_name are all used and roughly mean the same
  thing; unify this.
+const (
+	HealthStatus_UNKNOWN   HealthStatus = 0
+	HealthStatus_HEALTHY   HealthStatus = 1
+	HealthStatus_UNHEALTHY HealthStatus = 2
+	HealthStatus_DRAINING  HealthStatus = 3
+	HealthStatus_TIMEOUT   HealthStatus = 4
+	HealthStatus_DEGRADED  HealthStatus = 5
+)
+
+https://www.envoyproxy.io/docs/envoy/v1.11.2/api-docs/xds_protocol

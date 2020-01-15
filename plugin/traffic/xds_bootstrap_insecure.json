@@ -1,8 +1,8 @@
 {
         "node": {
-                "id": "ENVOY_NODE_ID",
+                "id": "COREDNS_NODE_ID",
                 "metadata": {
-                    "TRAFFICDIRECTOR_GRPC_HOSTNAME": "trafficdirector"
+                    "TRAFFICDIRECTOR_GRPC_HOSTNAME": "xds_cluster"
             }
         },
         "xds_servers" : [{

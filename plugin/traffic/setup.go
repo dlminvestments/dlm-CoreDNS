@@ -1,14 +1,12 @@
 package traffic
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
-	"github.com/coredns/coredns/plugin/traffic/xds"
 
 	"github.com/caddyserver/caddy"
 )
@@ -33,8 +31,19 @@ func setup(c *caddy.Controller) error {
 		return t
 	})
 
-	t.c.WatchCluster("", func(x xds.CDSUpdate, _ error) { fmt.Printf("CDSUpdate: %+v\n", x) })
-	t.c.WatchEndpoints("", func(x *xds.EDSUpdate, _ error) { fmt.Printf("EDSUpdate: %+v\n", x) })
+	stream, err := t.c.Run()
+	if err != nil {
+		return plugin.Error("traffic", err)
+	}
+
+	if err := t.c.ClusterDiscovery(stream, "", "", []string{}); err != nil {
+		log.Error(err)
+	}
+
+	err = t.c.Receive(stream)
+	if err != nil {
+		return plugin.Error("traffic", err)
+	}
 
 	return nil
 }

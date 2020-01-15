@@ -8,7 +8,6 @@ import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/response"
 	"github.com/coredns/coredns/plugin/traffic/xds"
-	"github.com/coredns/coredns/plugin/traffic/xds/bootstrap"
 
 	"github.com/miekg/dns"
 )
@@ -21,11 +20,7 @@ type Traffic struct {
 
 // New returns a pointer to a new and initialized Traffic.
 func New() (*Traffic, error) {
-	config, err := bootstrap.NewConfig()
-	if err != nil {
-		return nil, err
-	}
-	c, err := xds.New(xds.Options{Config: *config})
+	c, err := xds.New(":18000", "mycoredns")
 	if err != nil {
 		return nil, err
 	}
