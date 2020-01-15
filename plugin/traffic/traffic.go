@@ -2,12 +2,11 @@ package traffic
 
 import (
 	"context"
-	"math/rand"
-	"time"
 
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/pkg/response"
+	"github.com/coredns/coredns/plugin/pkg/dnsutil"
 	"github.com/coredns/coredns/plugin/traffic/xds"
+	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
 )
@@ -34,39 +33,28 @@ func (t *Traffic) Close() {
 
 // ServeDNS implements the plugin.Handler interface.
 func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	tw := &ResponseWriter{ResponseWriter: w}
-	return plugin.NextOrFailure(t.Name(), t.Next, ctx, tw, r)
+	state := request.Request{Req: r, W: w}
+
+	cluster, _ := dnsutil.TrimZone(state.Name(), "example.org")
+	addr := t.c.Select(cluster)
+	if addr == nil {
+		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
+	}
+
+	log.Debugf("Found address %q for %q", addr, cluster)
+
+	// assemble reply
+	m := new(dns.Msg)
+	m.SetReply(r)
+
+	m.Answer = []dns.RR{&dns.A{
+		dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
+		addr,
+	}}
+
+	w.WriteMsg(m)
+	return 0, nil
 }
 
 // Name implements the plugin.Handler interface.
 func (t *Traffic) Name() string { return "traffic" }
-
-// ResponseWriter writes a traffic load balanced response.
-type ResponseWriter struct {
-	dns.ResponseWriter
-}
-
-// WriteMsg implements the dns.ResponseWriter interface.
-func (r *ResponseWriter) WriteMsg(res *dns.Msg) error {
-	// set all TTLs to 5, also negative TTL?
-	if res.Rcode != dns.RcodeSuccess {
-		return r.ResponseWriter.WriteMsg(res)
-	}
-
-	if res.Question[0].Qtype != dns.TypeA && res.Question[0].Qtype != dns.TypeAAAA {
-		return r.ResponseWriter.WriteMsg(res)
-	}
-
-	typ, _ := response.Typify(res, time.Now().UTC())
-	if typ != response.NoError {
-		return r.ResponseWriter.WriteMsg(res)
-	}
-
-	if len(res.Answer) > 1 {
-		res.Answer = []dns.RR{res.Answer[rand.Intn(len(res.Answer))]}
-		res.Answer[0].Header().Ttl = 5
-	}
-	res.Ns = []dns.RR{} // remove auth section, we don't care
-
-	return r.ResponseWriter.WriteMsg(res)
-}

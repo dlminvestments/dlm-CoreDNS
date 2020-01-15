@@ -40,10 +40,13 @@ func setup(c *caddy.Controller) error {
 		log.Error(err)
 	}
 
-	err = t.c.Receive(stream)
-	if err != nil {
-		return plugin.Error("traffic", err)
-	}
+	go func() {
+		err = t.c.Receive(stream)
+		if err != nil {
+			// can't do log debug in setup functions
+			log.Debug(err)
+		}
+	}()
 
 	return nil
 }

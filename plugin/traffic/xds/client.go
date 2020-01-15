@@ -22,7 +22,7 @@ package xds
 
 import (
 	"context"
-	"sync"
+	"net"
 	"time"
 
 	clog "github.com/coredns/coredns/plugin/pkg/log"
@@ -34,7 +34,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = clog.NewWithPlugin("traffic xds:")
+var log = clog.NewWithPlugin("traffic: xds")
 
 const (
 	cdsURL = "type.googleapis.com/envoy.api.v2.Cluster"
@@ -50,45 +50,6 @@ type Client struct {
 	node        *corepb.Node
 	cancel      context.CancelFunc
 	stop        chan struct{}
-}
-
-type assignment struct {
-	mu      sync.RWMutex
-	cla     map[string]*xdspb.ClusterLoadAssignment
-	version int // not sure what do with and if we should discard all clusters.
-}
-
-func (a assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
-	// if cla is nil we just found a cluster, check if we already know about it, or if we need to make
-	// a new entry
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	_, ok := a.cla[cluster]
-	if !ok {
-		a.cla[cluster] = cla
-		return
-	}
-	if cla == nil {
-		return
-	}
-	a.cla[cluster] = cla
-
-}
-
-func (a assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
-	return nil
-}
-
-func (a assignment) Clusters() []string {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-	clusters := make([]string, len(a.cla))
-	i := 0
-	for k := range a.cla {
-		clusters[i] = k
-		i++
-	}
-	return clusters
 }
 
 // New returns a new client that's dialed to addr using node as the local identifier.
@@ -144,7 +105,7 @@ func (c *Client) Receive(stream adsStream) error {
 		resp, err := stream.Recv()
 		if err != nil {
 			log.Warningf("Trouble receiving from the gRPC connection: %s", err)
-			time.Sleep(1 * time.Second) // better.
+			time.Sleep(10 * time.Second) // better.
 		}
 
 		switch resp.GetTypeUrl() {
@@ -160,8 +121,7 @@ func (c *Client) Receive(stream adsStream) error {
 				}
 				c.assignments.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
-			println("CDS", len(resp.GetResources()), "processed")
-			log.Debug("Cluster discovery processed with %d resources", len(resp.GetResources()))
+			log.Debugf("Cluster discovery processed with %d resources", len(resp.GetResources()))
 			// ack the CDS proto, with we we've got. (empty version would be NACK)
 			if err := c.ClusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), c.assignments.Clusters()); err != nil {
 				log.Warningf("Failed to acknowledge cluster discovery: %s", err)
@@ -188,13 +148,14 @@ func (c *Client) Receive(stream adsStream) error {
 				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
 				// ack the bloody thing
 			}
-			println("EDS", len(resp.GetResources()), "processed")
-			log.Debug("Endpoint discovery processed with %d resources", len(resp.GetResources()))
+			log.Debugf("Endpoint discovery processed with %d resources", len(resp.GetResources()))
 
 		default:
 			log.Warningf("Unknown response URL for discovery: %q", resp.GetTypeUrl())
 			continue
 		}
 	}
-	return nil
 }
+
+// Select is a small wrapper. bla bla, keeps assigmens private.
+func (c *Client) Select(cluster string) net.IP { return c.assignments.Select(cluster) }

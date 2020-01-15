@@ -1,4 +1,0 @@
-* unpack grpc-go's resolver and copy the bits we need here (we need *way* less)
-* hook this up, potentially look at the tls plugin for creds
-* hook up callbacks and test things out
-* are unit tests possible?

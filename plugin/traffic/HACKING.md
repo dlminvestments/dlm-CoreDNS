@@ -8,17 +8,15 @@ Repos used:
 <https://github.com/grpc/grpc-go/tree/master/xds/internal/client>
 :   implements client for xDS - much of this code has been reused here.
 
-To see if things are working start the testing control plane from go-control-plane:
+I found these website useful while working on this.
 
 * https://github.com/envoyproxy/envoy/blob/master/api/API_OVERVIEW.md
 * https://github.com/envoyproxy/learnenvoy/blob/master/_articles/service-discovery.md
-* This was really helpful: https://www.envoyproxy.io/docs/envoy/v1.11.2/api-docs/xds_protocol
-
-Cluster: A cluster is a group of logically similar endpoints that Envoy connects to. In v2, RDS
-routes points to clusters, CDS provides cluster configuration and Envoy discovers the cluster
-members via EDS.
+* This was *really* helpful: https://www.envoyproxy.io/docs/envoy/v1.11.2/api-docs/xds_protocol
 
 # Testing
+
+Assuming you have envoyproxy/go-control-plane checked out somewhere, then:
 
 ~~~ sh
 % cd ~/src/github.com/envoyproxy/go-control-plane/pkg/test/main
@@ -26,9 +24,10 @@ members via EDS.
 % ./main --xds=ads --runtimes=2 -debug
 ~~~
 
-This runs a binary from pkg/test/main. Now we're testing aDS. Everything is using gRPC with TLS,
-`grpc.WithInsecure()`. The binary runs on port 18000 on localhost; all these things are currently
-hardcoded in the *traffic* plugin. This will be factored out into config as some point.
+This runs a binary from pkg/test/main. Now we're testing aDS. Everything is using gRPC with TLS
+disabled: `grpc.WithInsecure()`. The test binary runs on port 18000 on localhost; all these things
+are currently hardcoded in the *traffic* plugin. This will be factored out into config as some
+point. Another thing that is hardcoded is the use of the "example.org" domain.
 
 Then for CoreDNS, check out the `traffic` branch, create a Corefile:
 
@@ -39,7 +38,18 @@ example.org {
 }
 ~~~
 
-Start CoreDNS, and see logging/debugging flow by; the test binary should also spew out a bunch of
-things. CoreDNS willl build up a list of cluster and endpoints. Next you can query it.
+Start CoreDNS (`coredns -conf Corefile -dns.port=1053`), and see logging/debugging flow by; the
+test binary should also spew out a bunch of things. CoreDNS willl build up a list of cluster and
+endpoints. Next you can query it:
 
-TODO
+~~~ sh
+% dig @localhost -p 1053 cluster-v0-0.example.org A
+;; QUESTION SECTION:
+;cluster-v0-0.example.org.	IN	A
+
+;; ANSWER SECTION:
+cluster-v0-0.example.org. 5	IN	A	127.0.0.1
+~~~
+
+Note: the xds/test binary is a go-control-plane binary with added debugging that I'm using for
+testing.
