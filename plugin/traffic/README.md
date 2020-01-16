@@ -42,7 +42,7 @@ traffic TO...
 The extended syntax is available is you want more control.
 
 ~~~
-traffic {
+traffic TO... {
     server SERVER [SERVER]...
     node ID
  }
@@ -60,9 +60,11 @@ names. For example if the Server Block specifies `lb.example.org` as one of the 
 
 ## Examples
 
-~~~ corefile
+~~~
 lb.example.org {
-    traffic grpc://127.0.0.1:18000
+    traffic grpc://127.0.0.1:18000 {
+        node test-id
+    }
     debug
     log
 }

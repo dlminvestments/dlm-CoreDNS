@@ -55,7 +55,13 @@ func setup(c *caddy.Controller) error {
 func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 	node := "coredns"
 	toHosts := []string{}
+	t := &Traffic{}
 	var err error
+
+	t.origins = make([]string, len(c.ServerBlockKeys))
+	for i := range c.ServerBlockKeys {
+		t.origins[i] = plugin.Host(c.ServerBlockKeys[i]).Normalize()
+	}
 
 	for c.Next() {
 		args := c.RemainingArgs()
@@ -70,8 +76,8 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 			if !strings.HasPrefix(toHosts[i], transport.GRPC+"://") {
 				return nil, fmt.Errorf("not a %s scheme: %s", transport.GRPC, toHosts[i])
 			}
-			// now cut the prefix off again, because the dialer needs to see normal address strings. All this
-			// grpc:// stuff is to enfore uniformaty accross plugins and future proofing for other protocols.
+			// now cut the prefix off again, because the dialler needs to see normal address strings. All this
+			// grpc:// stuff is to enforce uniform across plugins and future proofing for other protocols.
 			toHosts[i] = toHosts[i][len(transport.GRPC+"://"):]
 		}
 		for c.NextBlock() {
@@ -88,12 +94,10 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 		}
 	}
 
-	// TODO: only the first host is used.
-	x, err := xds.New(toHosts[0], node)
-	if err != nil {
+	// TODO: only the first host is used, need to figure out how to reconcile multiple upstream providers.
+	if t.c, err = xds.New(toHosts[0], node); err != nil {
 		return nil, err
 	}
 
-	t := &Traffic{c: x}
 	return t, nil
 }
