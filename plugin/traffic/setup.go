@@ -51,13 +51,18 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
-func parse(c *caddy.Controller) error {
+func parse(c *caddy.Controller) (*Traffic, error) {
 	for c.Next() {
 		args := c.RemainingArgs()
 		if len(args) != 0 {
-			return c.ArgErr()
+			return nil, c.ArgErr()
 
 		}
+		for c.NextBlock() {
+			switch c.Val() {
+			case "id":
+			}
+		}
 	}
-	return nil
+	return nil, nil
 }

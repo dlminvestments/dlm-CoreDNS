@@ -14,11 +14,12 @@ import (
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
 	c    *xds.Client
+	id   string
 	Next plugin.Handler
 }
 
 // New returns a pointer to a new and initialized Traffic.
-func New() (*Traffic, error) {
+func New(addr, node string) (*Traffic, error) {
 	c, err := xds.New(":18000", "mycoredns")
 	if err != nil {
 		return nil, err

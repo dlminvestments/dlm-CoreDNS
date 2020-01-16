@@ -54,7 +54,7 @@ type Client struct {
 
 // New returns a new client that's dialed to addr using node as the local identifier.
 func New(addr, node string) (*Client, error) {
-	// todo credentials
+	// todo credentials!
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	cc, err := grpc.Dial(addr, opts...)
 	if err != nil {

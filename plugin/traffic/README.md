@@ -39,11 +39,11 @@ The extended syntax (not implemented; everything is hard-coded at the moment):
 ~~~
 traffic {
     server grpc://dsdsd <creds>
-    id ID
+    node ID
  }
 ~~~
 
-* id **ID** is how *traffic* identifies itself to the control plane.
+* node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
 
 
 ## Examples
