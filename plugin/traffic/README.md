@@ -23,7 +23,7 @@ endpoints need to be drained from it.
 every 10 seconds. The plugin hands out responses that adhere to these assignments. Each DNS response
 contains a single IP address that's considered the best one. *Traffic* will load balance A and AAAA
 queries. The TTL on these answer is set to 5s. It will only return successful responses either with
-an answer or otherwise a NODATA response. NXDOMAIN responses will *never* be sent.
+an answer or otherwise a NODATA response. Queries for non-existent clusters get a NXDOMAIN.
 
 The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
 acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new
@@ -35,8 +35,9 @@ assignment yet, it will still include this endpoint address in responses.
 traffic TO...
 ~~~
 
- *  **TO...** are the Envoy control plane endpoint to connect to. The syntax mimics the *forward*
-    plugin and must start with `grpc://`.
+This enabled the *traffic* plugin, with a default node id of `coredns` and no TLS.
+
+*  **TO...** are the Envoy control plane endpoint to connect to. This must start with `grpc://`.
 
 The extended syntax is available is you want more control.
 
@@ -46,7 +47,7 @@ traffic TO... {
     node ID
     tls CERT KEY CA
     tls_servername NAME
- }
+}
 ~~~
 
 *  node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
@@ -57,7 +58,7 @@ traffic TO... {
   * `tls` **CA** - no client authentication is used, and the file CA is used to verify the server certificate
   * `tls` **CERT** **KEY** - client authentication is used with the specified cert/key pair.
     The server certificate is verified with the system CAs.
-  * `tls` **CERT** **KEY**  **CA** - client authentication is used with the specified cert/key pair.
+  * `tls` **CERT** **KEY** **CA** - client authentication is used with the specified cert/key pair.
     The server certificate is verified using the specified CA file.
 
 * `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is needed
@@ -120,9 +121,9 @@ Multiple **TO** addresses is not implemented.
 
 ## TODO
 
-* reconnecting the stream
 * acking responses
 * correctly tracking versions and pruning old clusters.
 * metrics?
+* how to exactly deal with health status from the endpoints.
 * testing
-* credentials (other than TLS)
+* credentials (other than TLS) - how/what?

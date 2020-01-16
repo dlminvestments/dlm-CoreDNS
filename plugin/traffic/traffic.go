@@ -39,18 +39,20 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
 	}
 
-	addr := t.c.Select(cluster)
-	if addr != nil {
-		log.Debugf("Found endpoint %q for %q", addr, cluster)
-	} else {
-		log.Debugf("No healthy endpoints found for %q", cluster)
-	}
-
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Authoritative = true
 
+	addr, ok := t.c.Select(cluster)
+	if !ok {
+		m.Ns = soa(state.Zone)
+		m.Rcode = dns.RcodeNameError
+		w.WriteMsg(m)
+		return 0, nil
+	}
+
 	if addr == nil {
+		log.Debugf("No (healthy) endpoints found for %q", cluster)
 		m.Ns = soa(state.Zone)
 		w.WriteMsg(m)
 		return 0, nil

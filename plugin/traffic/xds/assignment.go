@@ -54,10 +54,10 @@ func (a *assignment) clusters() []string {
 
 // Select selects a backend from cla, using weighted random selection. It only selects
 // backends that are reporting healthy.
-func (a *assignment) Select(cluster string) net.IP {
+func (a *assignment) Select(cluster string) (net.IP, bool) {
 	cla := a.clusterLoadAssignment(cluster)
 	if cla == nil {
-		return nil
+		return nil, false
 	}
 
 	total := 0
@@ -81,7 +81,7 @@ func (a *assignment) Select(cluster string) net.IP {
 				//					continue
 				//				}
 				if r == i {
-					return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
+					return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
 				}
 				i++
 			}
@@ -98,9 +98,9 @@ func (a *assignment) Select(cluster string) net.IP {
 			//			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
 			if r <= 0 {
-				return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
+				return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
 			}
 		}
 	}
-	return nil
+	return nil, false
 }

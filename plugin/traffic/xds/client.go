@@ -216,5 +216,6 @@ func (c *Client) Receive(stream adsStream) error {
 	}
 }
 
-// Select returns an address that is deemed to be the correct one for this cluster.
-func (c *Client) Select(cluster string) net.IP { return c.assignments.Select(cluster) }
+// Select returns an address that is deemed to be the correct one for this cluster. The returned
+// boolean indicates if the cluster exists.
+func (c *Client) Select(cluster string) (net.IP, bool) { return c.assignments.Select(cluster) }
