@@ -23,14 +23,17 @@ package xds
 import (
 	"context"
 	"net"
+	"os"
 	"time"
 
+	"github.com/coredns/coredns/coremain"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	adsgrpc "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
 	"github.com/golang/protobuf/ptypes"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"google.golang.org/grpc"
 )
 
@@ -61,7 +64,18 @@ func New(addr, node string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := &Client{cc: cc, node: &corepb.Node{Id: "test-id"}} // do more with this node data? Hostname port??
+	hostname, _ := os.Hostname()
+	c := &Client{cc: cc, node: &corepb.Node{Id: node,
+		Metadata: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"HOSTNAME": {
+					Kind: &structpb.Value_StringValue{StringValue: hostname},
+				},
+			},
+		},
+		BuildVersion: coremain.CoreVersion,
+	},
+	}
 	c.assignments = &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 
