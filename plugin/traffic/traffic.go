@@ -18,11 +18,9 @@ type Traffic struct {
 	c       *xds.Client
 	id      string
 	origins []string
-	Next    plugin.Handler
-}
 
-// shutdown closes the connection to the managment endpoints and stops any running goroutines.
-func (t *Traffic) shutdown() { t.c.Close() }
+	Next plugin.Handler
+}
 
 // ServeDNS implements the plugin.Handler interface.
 func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -38,7 +36,6 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		}
 	}
 	if cluster == "" {
-		// TODO(miek): can this actually happen?
 		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
 	}
 

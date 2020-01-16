@@ -22,8 +22,10 @@ package xds
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/coredns/coredns/coremain"
@@ -54,12 +56,12 @@ type Client struct {
 	node        *corepb.Node
 	cancel      context.CancelFunc
 	stop        chan struct{}
+	mu          sync.RWMutex
+	nonce       string
 }
 
 // New returns a new client that's dialed to addr using node as the local identifier.
-func New(addr, node string) (*Client, error) {
-	// todo credentials!
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 	cc, err := grpc.Dial(addr, opts...)
 	if err != nil {
 		return nil, err
@@ -82,21 +84,54 @@ func New(addr, node string) (*Client, error) {
 	return c, nil
 }
 
-// Close closes a client performs cleanups.
-func (c *Client) Close() { c.cancel(); c.cc.Close() }
+// Stop stops all goroutines and closes the connection to the upstream manager.
+func (c *Client) Stop() error { c.cancel(); return c.cc.Close() }
 
-// Run runs the gRPC stream to the manager.
-func (c *Client) Run() (adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClient, error) {
-	cli := adsgrpc.NewAggregatedDiscoveryServiceClient(c.cc)
-	stream, err := cli.StreamAggregatedResources(c.ctx)
-	if err != nil {
-		return nil, err
+// Run starts all goroutines and gathers the clusters and endpoint information from the upstream manager.
+func (c *Client) Run() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		default:
+		}
+
+		cli := adsgrpc.NewAggregatedDiscoveryServiceClient(c.cc)
+		stream, err := cli.StreamAggregatedResources(c.ctx)
+		if err != nil {
+			log.Debug(err)
+			time.Sleep(2 * time.Second) // grpc's client.go does more spiffy exp. backoff, do we really need that?
+			continue
+		}
+
+		done := make(chan struct{})
+		go func() {
+			tick := time.NewTicker(10 * time.Second)
+			for {
+				select {
+				case <-tick.C:
+					// send empty list for cluster discovery again and again
+					log.Debugf("Requesting cluster list, nonce %q:", c.Nonce())
+					if err := c.clusterDiscovery(stream, "", c.Nonce(), []string{}); err != nil {
+						log.Debug(err)
+					}
+
+				case <-done:
+					tick.Stop()
+					return
+				}
+			}
+		}()
+
+		if err := c.Receive(stream); err != nil {
+			log.Debug(err)
+		}
+		close(done)
 	}
-	return stream, nil
 }
 
-// ClusterDiscovery sends a cluster DiscoveryRequest on the stream.
-func (c *Client) ClusterDiscovery(stream adsStream, version, nonce string, clusters []string) error {
+// clusterDiscovery sends a cluster DiscoveryRequest on the stream.
+func (c *Client) clusterDiscovery(stream adsStream, version, nonce string, clusters []string) error {
 	req := &xdspb.DiscoveryRequest{
 		Node:          c.node,
 		TypeUrl:       cdsURL,
@@ -107,8 +142,8 @@ func (c *Client) ClusterDiscovery(stream adsStream, version, nonce string, clust
 	return stream.Send(req)
 }
 
-// EndpointDiscovery sends a endpoint DiscoveryRequest on the stream.
-func (c *Client) EndpointDiscovery(stream adsStream, version, nonce string, clusters []string) error {
+// endpointDiscovery sends a endpoint DiscoveryRequest on the stream.
+func (c *Client) endpointDiscovery(stream adsStream, version, nonce string, clusters []string) error {
 	req := &xdspb.DiscoveryRequest{
 		Node:          c.node,
 		TypeUrl:       edsURL,
@@ -124,8 +159,7 @@ func (c *Client) Receive(stream adsStream) error {
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
-			log.Warningf("Trouble receiving from the gRPC connection: %s", err)
-			time.Sleep(10 * time.Second) // better.
+			return err
 		}
 
 		switch resp.GetTypeUrl() {
@@ -133,25 +167,30 @@ func (c *Client) Receive(stream adsStream) error {
 			for _, r := range resp.GetResources() {
 				var any ptypes.DynamicAny
 				if err := ptypes.UnmarshalAny(r, &any); err != nil {
+					log.Debugf("Failed to unmarshal cluster discovery: %s", err)
 					continue
 				}
 				cluster, ok := any.Message.(*xdspb.Cluster)
 				if !ok {
 					continue
 				}
-				c.assignments.SetClusterLoadAssignment(cluster.GetName(), nil)
+				c.assignments.setClusterLoadAssignment(cluster.GetName(), nil)
 			}
 			log.Debugf("Cluster discovery processed with %d resources", len(resp.GetResources()))
+
 			// ack the CDS proto, with we we've got. (empty version would be NACK)
-			if err := c.ClusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), c.assignments.Clusters()); err != nil {
-				log.Warningf("Failed to acknowledge cluster discovery: %s", err)
+			if err := c.clusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), c.assignments.clusters()); err != nil {
+				log.Debug(err)
+				continue
 			}
 			// need to figure out how to handle the versions and nounces exactly.
 
 			// now kick off discovery for endpoints
-			if err := c.EndpointDiscovery(stream, "", "", c.assignments.Clusters()); err != nil {
-				log.Warningf("Failed to perform endpoint discovery: %s", err)
+			if err := c.endpointDiscovery(stream, "", resp.GetNonce(), c.assignments.clusters()); err != nil {
+				log.Debug(err)
+				continue
 			}
+			c.SetNonce(resp.GetNonce())
 
 		case edsURL:
 			for _, r := range resp.GetResources() {
@@ -162,17 +201,15 @@ func (c *Client) Receive(stream adsStream) error {
 				}
 				cla, ok := any.Message.(*xdspb.ClusterLoadAssignment)
 				if !ok {
-					log.Debugf("Unexpected resource type: %T in endpoint discovery", any.Message)
 					continue
 				}
-				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
+				c.assignments.setClusterLoadAssignment(cla.GetClusterName(), cla)
 				// ack the bloody thing
 			}
 			log.Debugf("Endpoint discovery processed with %d resources", len(resp.GetResources()))
 
 		default:
-			log.Warningf("Unknown response URL for discovery: %q", resp.GetTypeUrl())
-			continue
+			return fmt.Errorf("unknown response URL for discovery: %q", resp.GetTypeUrl())
 		}
 	}
 }

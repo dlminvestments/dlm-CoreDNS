@@ -44,10 +44,24 @@ The extended syntax is available is you want more control.
 traffic TO... {
     server SERVER [SERVER]...
     node ID
+    tls CERT KEY CA
+    tls_servername NAME
  }
 ~~~
 
- *  node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
+*  node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
+* `tls` **CERT** **KEY** **CA** define the TLS properties for gRPC connection. If this is omitted an
+  insecure connection is attempted. From 0 to 3 arguments can be provided with the meaning as described below
+
+  * `tls` - no client authentication is used, and the system CAs are used to verify the server certificate
+  * `tls` **CA** - no client authentication is used, and the file CA is used to verify the server certificate
+  * `tls` **CERT** **KEY** - client authentication is used with the specified cert/key pair.
+    The server certificate is verified with the system CAs.
+  * `tls` **CERT** **KEY**  **CA** - client authentication is used with the specified cert/key pair.
+    The server certificate is verified using the specified CA file.
+
+* `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is needed
+  because *traffic* connects to an IP address, so it can't infer the server name from it.
 
 ## Naming Clusters
 
@@ -56,6 +70,15 @@ The *traffic* plugins uses the name(s) specified in the Server Block to create f
 domain names. For example if the Server Block specifies `lb.example.org` as one of the names,
 and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to query asking for
 `cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
+
+## Metrics
+
+What metrics should we do?
+
+## Ready
+
+Should this plugin implement readyness?
+
 
 ## Examples
 
@@ -70,7 +93,7 @@ lb.example.org {
 ~~~
 
 This will load balance any names under `lb.example.org` using the data from the manager running on
-localhost on port 18000. The node ID will default to `coredns`.
+localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
 
 ## Also See
 
@@ -94,3 +117,12 @@ use this resolver. So reporting a load of +1 on the CoreDNS side can be anything
 making the load reporting highly inaccurate.
 
 Multiple **TO** addresses is not implemented.
+
+## TODO
+
+* reconnecting the stream
+* acking responses
+* correctly tracking versions and pruning old clusters.
+* metrics?
+* testing
+* credentials (other than TLS)
