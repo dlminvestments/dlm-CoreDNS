@@ -31,20 +31,23 @@ assignment yet, it will still include this endpoint address in responses.
 ## Syntax
 
 ~~~
-traffic
+traffic TO...
 ~~~
 
-The extended syntax (not implemented; everything is hard-coded at the moment):
+* **TO...** are the Envoy control plane endpoint to connect to. The syntax mimics the *forward*
+ plugin and must start with `grpc://`.
+
+
+The extended syntax is available is you want more control.
 
 ~~~
 traffic {
-    server grpc://dsdsd <creds>
+    server SERVER [SERVER]...
     node ID
  }
 ~~~
 
 * node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
-
 
 ## Examples
 

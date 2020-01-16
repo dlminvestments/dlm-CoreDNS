@@ -7,28 +7,40 @@ import (
 )
 
 func TestSetup(t *testing.T) {
+	/*
+		c := caddy.NewTestController("dns", `traffic grpc://bla`)
+		if err := setup(c); err != nil {
+			t.Fatalf("Test 1, expected no errors, but got: %q", err)
+		}
+	*/
+}
+
+func TestParse(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
 	}{
-		// positive
-		{`traffic`, false},
-		// negative
-		{`traffic fleeb`, true},
+		// fail
+		{`traffic {
+			id bla bla
+		}`, true},
+		{`traffic {
+			node bla bla
+		}`, true},
 	}
-
 	for i, test := range tests {
 		c := caddy.NewTestController("dns", test.input)
-		err := parse(c)
-
+		_, err := parse(c)
 		if test.shouldErr && err == nil {
-			t.Errorf("Test %d: Expected error but found %s for input %s", i, err, test.input)
+			t.Errorf("Test %v: Expected error but found nil", i)
+			continue
+		} else if !test.shouldErr && err != nil {
+			t.Errorf("Test %v: Expected no error but found error: %v", i, err)
+			continue
 		}
 
-		if err != nil {
-			if !test.shouldErr {
-				t.Errorf("Test %d: Expected no error but found one for input %s. Error was: %v", i, test.input, err)
-			}
+		if test.shouldErr {
+			continue
 		}
 	}
 }

@@ -14,7 +14,7 @@ type assignment struct {
 	version int // not sure what do with and if we should discard all clusters.
 }
 
-func (a assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
+func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
 	// If cla is nil we just found a cluster, check if we already know about it, or if we need to make a new entry.
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -33,7 +33,7 @@ func (a assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterL
 }
 
 // ClusterLoadAssignment returns the healthy endpoints and their weight.
-func (a assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
+func (a *assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
 	a.mu.RLock()
 	cla, ok := a.cla[cluster]
 	a.mu.RUnlock()
@@ -43,7 +43,7 @@ func (a assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssi
 	return cla
 }
 
-func (a assignment) Clusters() []string {
+func (a *assignment) Clusters() []string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	clusters := make([]string, len(a.cla))
@@ -57,7 +57,7 @@ func (a assignment) Clusters() []string {
 
 // Select selects a backend from cla, using weighted random selection. It only selects
 // backends that are reporting healthy.
-func (a assignment) Select(cluster string) net.IP {
+func (a *assignment) Select(cluster string) net.IP {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil
@@ -105,6 +105,5 @@ func (a assignment) Select(cluster string) net.IP {
 			}
 		}
 	}
-
 	return nil
 }

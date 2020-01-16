@@ -7,6 +7,7 @@ import (
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	"github.com/coredns/coredns/plugin/traffic/xds"
 
 	"github.com/caddyserver/caddy"
 )
@@ -17,11 +18,7 @@ func init() { plugin.Register("traffic", setup) }
 
 func setup(c *caddy.Controller) error {
 	rand.Seed(int64(time.Now().Nanosecond()))
-	if err := parse(c); err != nil {
-		return plugin.Error("traffic", err)
-	}
-
-	t, err := New()
+	t, err := parse(c)
 	if err != nil {
 		return plugin.Error("traffic", err)
 	}
@@ -52,6 +49,8 @@ func setup(c *caddy.Controller) error {
 }
 
 func parse(c *caddy.Controller) (*Traffic, error) {
+	node := "coredns"
+
 	for c.Next() {
 		args := c.RemainingArgs()
 		if len(args) != 0 {
@@ -61,8 +60,22 @@ func parse(c *caddy.Controller) (*Traffic, error) {
 		for c.NextBlock() {
 			switch c.Val() {
 			case "id":
+				args := c.RemainingArgs()
+				if len(args) != 1 {
+					return nil, c.ArgErr()
+				}
+				node = args[0]
+			default:
+				return nil, c.Errf("unknown property '%s'", c.Val())
 			}
 		}
 	}
-	return nil, nil
+
+	x, err := xds.New(":18000", node)
+	if err != nil {
+		return nil, err
+	}
+
+	t := &Traffic{c: x}
+	return t, nil
 }

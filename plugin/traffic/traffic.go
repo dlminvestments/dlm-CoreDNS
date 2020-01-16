@@ -18,19 +18,8 @@ type Traffic struct {
 	Next plugin.Handler
 }
 
-// New returns a pointer to a new and initialized Traffic.
-func New(addr, node string) (*Traffic, error) {
-	c, err := xds.New(":18000", "mycoredns")
-	if err != nil {
-		return nil, err
-	}
-
-	return &Traffic{c: c}, nil
-}
-
-func (t *Traffic) Close() {
-	t.c.Close()
-}
+// shutdown closes the connection to the managment endpoints and stops any running goroutines.
+func (t *Traffic) shutdown() { t.c.Close() }
 
 // ServeDNS implements the plugin.Handler interface.
 func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -49,8 +38,8 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 
 	m.Answer = []dns.RR{&dns.A{
-		dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
-		addr,
+		Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
+		A:   addr,
 	}}
 
 	w.WriteMsg(m)

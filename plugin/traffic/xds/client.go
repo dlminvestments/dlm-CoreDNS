@@ -43,10 +43,11 @@ const (
 
 type adsStream adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClient
 
+// Client talks to the grpc manager's endpoint to get load assignments.
 type Client struct {
 	cc          *grpc.ClientConn
 	ctx         context.Context
-	assignments assignment
+	assignments *assignment
 	node        *corepb.Node
 	cancel      context.CancelFunc
 	stop        chan struct{}
@@ -61,14 +62,16 @@ func New(addr, node string) (*Client, error) {
 		return nil, err
 	}
 	c := &Client{cc: cc, node: &corepb.Node{Id: "test-id"}} // do more with this node data? Hostname port??
-	c.assignments = assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+	c.assignments = &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 
 	return c, nil
 }
 
+// Close closes a client performs cleanups.
 func (c *Client) Close() { c.cancel(); c.cc.Close() }
 
+// Run runs the gRPC stream to the manager.
 func (c *Client) Run() (adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClient, error) {
 	cli := adsgrpc.NewAggregatedDiscoveryServiceClient(c.cc)
 	stream, err := cli.StreamAggregatedResources(c.ctx)
@@ -78,6 +81,7 @@ func (c *Client) Run() (adsgrpc.AggregatedDiscoveryService_StreamAggregatedResou
 	return stream, nil
 }
 
+// ClusterDiscovery sends a cluster DiscoveryRequest on the stream.
 func (c *Client) ClusterDiscovery(stream adsStream, version, nonce string, clusters []string) error {
 	req := &xdspb.DiscoveryRequest{
 		Node:          c.node,
@@ -89,6 +93,7 @@ func (c *Client) ClusterDiscovery(stream adsStream, version, nonce string, clust
 	return stream.Send(req)
 }
 
+// EndpointDiscovery sends a endpoint DiscoveryRequest on the stream.
 func (c *Client) EndpointDiscovery(stream adsStream, version, nonce string, clusters []string) error {
 	req := &xdspb.DiscoveryRequest{
 		Node:          c.node,
@@ -100,6 +105,7 @@ func (c *Client) EndpointDiscovery(stream adsStream, version, nonce string, clus
 	return stream.Send(req)
 }
 
+// Receive receives from the stream, it handled both cluster and endpoint DiscoveryResponses.
 func (c *Client) Receive(stream adsStream) error {
 	for {
 		resp, err := stream.Recv()
@@ -157,5 +163,5 @@ func (c *Client) Receive(stream adsStream) error {
 	}
 }
 
-// Select is a small wrapper. bla bla, keeps assigmens private.
+// Select returns an address that is deemed to be the correct one for this cluster.
 func (c *Client) Select(cluster string) net.IP { return c.assignments.Select(cluster) }

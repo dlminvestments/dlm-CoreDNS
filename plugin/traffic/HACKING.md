@@ -33,7 +33,9 @@ Then for CoreDNS, check out the `traffic` branch, create a Corefile:
 
 ~~~ Corefile
 example.org {
-    traffic
+    traffic {
+        id test-id
+    }
     debug
 }
 ~~~
