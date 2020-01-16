@@ -15,7 +15,7 @@ func TestSetup(t *testing.T) {
 	*/
 }
 
-func TestParse(t *testing.T) {
+func TestParseTraffic(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
@@ -30,7 +30,7 @@ func TestParse(t *testing.T) {
 	}
 	for i, test := range tests {
 		c := caddy.NewTestController("dns", test.input)
-		_, err := parse(c)
+		_, err := parseTraffic(c)
 		if test.shouldErr && err == nil {
 			t.Errorf("Test %v: Expected error but found nil", i)
 			continue

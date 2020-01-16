@@ -33,7 +33,7 @@ Then for CoreDNS, check out the `traffic` branch, create a Corefile:
 
 ~~~ Corefile
 example.org {
-    traffic {
+    traffic grpc://127.0.0.1:18000 {
         id test-id
     }
     debug

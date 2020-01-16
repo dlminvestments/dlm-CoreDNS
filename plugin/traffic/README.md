@@ -53,7 +53,7 @@ traffic {
 
 ~~~ corefile
 example.org {
-    traffic
+    traffic grpc://127.0.0.1:18000
     debug
     log
 }
@@ -61,6 +61,14 @@ example.org {
 
 This will add load balancing for domains under example.org; the upstream information comes from
 10.12.13.14; depending on received assignments, replies will be let through as-is or are load balanced.
+
+## Also See
+
+The following documents provide some background on Envoy's control plane.
+
+* https://github.com/envoyproxy/go-control-plane
+* https://blog.christianposta.com/envoy/guidance-for-building-a-control-plane-to-manage-envoy-proxy-based-infrastructure/
+* https://github.com/envoyproxy/envoy/blob/442f9fcf21a5f091cec3fe9913ff309e02288659/api/envoy/api/v2/discovery.proto#L63
 
 ## Bugs
 
@@ -73,10 +81,4 @@ clients that will use this reply, the responding server (CoreDNS) has no idea ho
 this resolver. So reporting a load of +1 on the CoreDNS side can be anything from 1 to 1000+, making
 the load reporting highly inaccurate.
 
-## Also See
-
-The following documents provide some background on Envoy's control plane.
-
-* https://github.com/envoyproxy/go-control-plane
-* https://blog.christianposta.com/envoy/guidance-for-building-a-control-plane-to-manage-envoy-proxy-based-infrastructure/
-* https://github.com/envoyproxy/envoy/blob/442f9fcf21a5f091cec3fe9913ff309e02288659/api/envoy/api/v2/discovery.proto#L63
+Multiple **TO** addresses is not implemented.

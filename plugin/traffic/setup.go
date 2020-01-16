@@ -1,12 +1,16 @@
 package traffic
 
 import (
+	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	"github.com/coredns/coredns/plugin/pkg/parse"
+	"github.com/coredns/coredns/plugin/pkg/transport"
 	"github.com/coredns/coredns/plugin/traffic/xds"
 
 	"github.com/caddyserver/caddy"
@@ -18,7 +22,7 @@ func init() { plugin.Register("traffic", setup) }
 
 func setup(c *caddy.Controller) error {
 	rand.Seed(int64(time.Now().Nanosecond()))
-	t, err := parse(c)
+	t, err := parseTraffic(c)
 	if err != nil {
 		return plugin.Error("traffic", err)
 	}
@@ -48,14 +52,27 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
-func parse(c *caddy.Controller) (*Traffic, error) {
+func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 	node := "coredns"
+	toHosts := []string{}
+	var err error
 
 	for c.Next() {
 		args := c.RemainingArgs()
-		if len(args) != 0 {
+		if len(args) < 1 {
 			return nil, c.ArgErr()
-
+		}
+		toHosts, err = parse.HostPortOrFile(args...)
+		if err != nil {
+			return nil, err
+		}
+		for i := range toHosts {
+			if !strings.HasPrefix(toHosts[i], transport.GRPC+"://") {
+				return nil, fmt.Errorf("not a %s scheme: %s", transport.GRPC, toHosts[i])
+			}
+			// now cut the prefix off again, because the dialer needs to see normal address strings. All this
+			// grpc:// stuff is to enfore uniformaty accross plugins and future proofing for other protocols.
+			toHosts[i] = toHosts[i][len(transport.GRPC+"://"):]
 		}
 		for c.NextBlock() {
 			switch c.Val() {
@@ -71,7 +88,8 @@ func parse(c *caddy.Controller) (*Traffic, error) {
 		}
 	}
 
-	x, err := xds.New(":18000", node)
+	// TODO: only the first host is used.
+	x, err := xds.New(toHosts[0], node)
 	if err != nil {
 		return nil, err
 	}
