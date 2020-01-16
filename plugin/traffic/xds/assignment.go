@@ -20,14 +20,12 @@ func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.Cluster
 	defer a.mu.Unlock()
 	_, ok := a.cla[cluster]
 	if !ok {
-		log.Debugf("Adding cluster %q", cluster)
 		a.cla[cluster] = cla
 		return
 	}
 	if cla == nil {
 		return
 	}
-	log.Debugf("Updating cluster %q", cluster)
 	a.cla[cluster] = cla
 
 }

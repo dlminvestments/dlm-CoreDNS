@@ -11,8 +11,9 @@ and draining of clusters. The cluster information is retrieved from a service
 discovery manager that implements the service discovery protocols that Envoy
 [implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol).
 
-A Cluster is defined as: "A cluster is a group of logically similar endpoints that Envoy connects
-to. Each cluster has a name, which *traffic* extends to be a domain name.
+A Cluster is defined as: "A group of logically similar endpoints that Envoy connects
+to." Each cluster has a name, which *traffic* extends to be a domain name. See
+"Naming Clusters" below.
 
 The use case for this plugin is when a cluster has endpoints running in multiple
 (Kubernetes?) clusters and you need to steer traffic to (or away) from these endpoints, i.e.
@@ -49,18 +50,26 @@ traffic {
 
 * node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
 
+## Naming Clusters
+
+When a cluster is named this usually consists out of a single word, i.e. "cluster-v0", or "web". The
+*traffic* plugins uses the name(s) specified in the Server Block to create fully qualified domain
+names. For example if the Server Block specifies `lb.example.org` as one of the names, and
+"cluster-v0" is one of the load balanced cluster, *traffic* will respond to query asking for
+`cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
+
 ## Examples
 
 ~~~ corefile
-example.org {
+lb.example.org {
     traffic grpc://127.0.0.1:18000
     debug
     log
 }
 ~~~
 
-This will add load balancing for domains under example.org; the upstream information comes from
-10.12.13.14; depending on received assignments, replies will be let through as-is or are load balanced.
+This will load balance any names under `lb.example.org` using the data from the manager running on
+localhost on port 18000. The node ID will default to `coredns`.
 
 ## Also See
 
