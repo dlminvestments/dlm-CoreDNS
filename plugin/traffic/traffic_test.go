@@ -41,7 +41,9 @@ func TestTraffic(t *testing.T) {
 		},
 		{
 			cla:     &xdspb.ClusterLoadAssignment{},
-			cluster: "does-not-exist", qtype: dns.TypeA, rcode: dns.RcodeNameError, ns: true},
+			cluster: "does-not-exist", qtype: dns.TypeA, rcode: dns.RcodeNameError, ns: true,
+		},
+		// healthy backend
 		{
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
@@ -49,12 +51,24 @@ func TestTraffic(t *testing.T) {
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.1",
 		},
+		// unknown backend
 		{
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", corepb.HealthStatus_UNKNOWN}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, ns: true,
+		},
+		// unknown backend and healthy backend
+		{
+			cla: &xdspb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints: endpoints([]EndpointHealth{
+					{"127.0.0.1", corepb.HealthStatus_UNKNOWN},
+					{"127.0.0.2", corepb.HealthStatus_HEALTHY},
+				}),
+			},
+			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
 		},
 	}
 
