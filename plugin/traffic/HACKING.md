@@ -1,4 +1,4 @@
-Hacking on *traffic*
+# Hacking on *traffic*
 
 Repos used:
 
@@ -12,7 +12,8 @@ I found these website useful while working on this.
 
 * https://github.com/envoyproxy/envoy/blob/master/api/API_OVERVIEW.md
 * https://github.com/envoyproxy/learnenvoy/blob/master/_articles/service-discovery.md
-* This was *really* helpful: https://www.envoyproxy.io/docs/envoy/v1.11.2/api-docs/xds_protocol
+* This was *really* helpful: https://www.envoyproxy.io/docs/envoy/v1.11.2/api-docs/xds_protocol to
+  show the flow of the protocol.
 
 # Testing
 
@@ -42,16 +43,8 @@ example.org {
 
 Start CoreDNS (`coredns -conf Corefile -dns.port=1053`), and see logging/debugging flow by; the
 test binary should also spew out a bunch of things. CoreDNS willl build up a list of cluster and
-endpoints. Next you can query it:
-
-~~~ sh
-% dig @localhost -p 1053 cluster-v0-0.example.org A
-;; QUESTION SECTION:
-;cluster-v0-0.example.org.	IN	A
-
-;; ANSWER SECTION:
-cluster-v0-0.example.org. 5	IN	A	127.0.0.1
-~~~
+endpoints. Next you can query it. Note none of the endpoints are HEALTHY so you'll mostly get NODATA
+responses, instead of actual records.
 
 Note: the xds/test binary is a go-control-plane binary with added debugging that I'm using for
 testing.

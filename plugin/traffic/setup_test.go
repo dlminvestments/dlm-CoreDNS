@@ -20,12 +20,19 @@ func TestParseTraffic(t *testing.T) {
 		input     string
 		shouldErr bool
 	}{
+		// ok
+		{`traffic grpc://127.0.0.1:18000 {
+			id test-id
+		}`, false},
+
 		// fail
+		{`traffic`, true},
+		{`traffic tls://1.1.1.1`, true},
 		{`traffic {
 			id bla bla
 		}`, true},
 		{`traffic {
-			node bla bla
+			node
 		}`, true},
 	}
 	for i, test := range tests {

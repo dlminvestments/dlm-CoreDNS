@@ -6,15 +6,21 @@ import (
 	"sync"
 
 	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
 type assignment struct {
-	mu      sync.RWMutex
-	cla     map[string]*xdspb.ClusterLoadAssignment
-	version int // not sure what do with and if we should discard all clusters.
+	mu  sync.RWMutex
+	cla map[string]*xdspb.ClusterLoadAssignment
 }
 
-func (a *assignment) setClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
+// NewAssignment returns a pointer to an assignment.
+func NewAssignment() *assignment {
+	return &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+}
+
+// SetClusterLoadAssignment sets the assignment for the cluster to cla.
+func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
 	// If cla is nil we just found a cluster, check if we already know about it, or if we need to make a new entry.
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -30,7 +36,8 @@ func (a *assignment) setClusterLoadAssignment(cluster string, cla *xdspb.Cluster
 
 }
 
-func (a *assignment) clusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
+// ClusterLoadAssignment returns the assignment for the cluster or nil if there is none.
+func (a *assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
 	a.mu.RLock()
 	cla, ok := a.cla[cluster]
 	a.mu.RUnlock()
@@ -52,55 +59,58 @@ func (a *assignment) clusters() []string {
 	return clusters
 }
 
-// Select selects a backend from cla, using weighted random selection. It only selects
+// Select selects a backend from cluster load assignments, using weighted random selection. It only selects
 // backends that are reporting healthy.
 func (a *assignment) Select(cluster string) (net.IP, bool) {
-	cla := a.clusterLoadAssignment(cluster)
+	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
 	}
 
 	total := 0
-	i := 0
+	healthy := 0
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			//			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
-			//				continue
-			//			}
+			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				continue
+			}
 			total += int(lb.GetLoadBalancingWeight().GetValue())
-			i++
+			healthy++
 		}
 	}
+	if healthy == 0 {
+		return nil, true
+	}
+
 	if total == 0 {
 		// all weights are 0, randomly select one of the endpoints.
-		r := rand.Intn(i)
+		r := rand.Intn(healthy)
 		i := 0
 		for _, ep := range cla.Endpoints {
 			for _, lb := range ep.GetLbEndpoints() {
-				//				if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
-				//					continue
-				//				}
+				if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+					continue
+				}
 				if r == i {
 					return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
 				}
 				i++
 			}
 		}
-		return nil
+		return nil, true
 	}
 
 	r := rand.Intn(total) + 1
-
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			//			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
-			//				continue
-			//			}
+			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				continue
+			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
 			if r <= 0 {
 				return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
 			}
 		}
 	}
-	return nil, false
+	return nil, true
 }

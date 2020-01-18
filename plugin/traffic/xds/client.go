@@ -52,12 +52,14 @@ type adsStream adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClien
 type Client struct {
 	cc          *grpc.ClientConn
 	ctx         context.Context
-	assignments *assignment
+	assignments *assignment // assignments contains the current clusters and endpoints.
 	node        *corepb.Node
 	cancel      context.CancelFunc
 	stop        chan struct{}
 	mu          sync.RWMutex
-	nonce       string
+
+	version map[string]string
+	nonce   map[string]string
 }
 
 // New returns a new client that's dialed to addr using node as the local identifier.
@@ -79,6 +81,7 @@ func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 	},
 	}
 	c.assignments = &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+	c.version, c.nonce = make(map[string]string), make(map[string]string)
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 
 	return c, nil
@@ -106,13 +109,15 @@ func (c *Client) Run() {
 
 		done := make(chan struct{})
 		go func() {
-			tick := time.NewTicker(1 * time.Second)
+			if err := c.clusterDiscovery(stream, c.Version(cdsURL), c.Nonce(cdsURL), []string{}); err != nil {
+				log.Debug(err)
+			}
+			tick := time.NewTicker(10 * time.Second)
 			for {
 				select {
 				case <-tick.C:
-					// send empty list for cluster discovery again and again
-					log.Debugf("Requesting cluster list, nonce %q:", c.Nonce())
-					if err := c.clusterDiscovery(stream, "", c.Nonce(), []string{}); err != nil {
+					// send empty list for cluster discovery every 10 seconds
+					if err := c.clusterDiscovery(stream, c.Version(cdsURL), c.Nonce(cdsURL), []string{}); err != nil {
 						log.Debug(err)
 					}
 
@@ -124,7 +129,7 @@ func (c *Client) Run() {
 		}()
 
 		if err := c.Receive(stream); err != nil {
-			log.Debug(err)
+			log.Warning(err)
 		}
 		close(done)
 	}
@@ -164,7 +169,7 @@ func (c *Client) Receive(stream adsStream) error {
 
 		switch resp.GetTypeUrl() {
 		case cdsURL:
-			a := &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+			a := NewAssignment()
 			for _, r := range resp.GetResources() {
 				var any ptypes.DynamicAny
 				if err := ptypes.UnmarshalAny(r, &any); err != nil {
@@ -175,24 +180,18 @@ func (c *Client) Receive(stream adsStream) error {
 				if !ok {
 					continue
 				}
-				a.setClusterLoadAssignment(cluster.GetName(), nil)
+				a.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
-			log.Debugf("Cluster discovery processed with %d resources", len(resp.GetResources()))
-
-			// ack the CDS proto, with we we've got. (empty version would be NACK)
-			if err := c.clusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), a.clusters()); err != nil {
-				log.Debug(err)
-				continue
-			}
-			// need to figure out how to handle the versions and nounces exactly.
-
-			c.SetNonce(resp.GetNonce())
+			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q, clusters: %v", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL), a.clusters())
+			// set our local administration and ack the reply. Empty version would signal NACK.
+			c.SetNonce(cdsURL, resp.GetNonce())
+			c.SetVersion(cdsURL, resp.GetVersionInfo())
 			c.SetAssignments(a)
+			c.clusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), a.clusters())
 
 			// now kick off discovery for endpoints
-			if err := c.endpointDiscovery(stream, "", resp.GetNonce(), a.clusters()); err != nil {
+			if err := c.endpointDiscovery(stream, c.Version(edsURL), c.Nonce(edsURL), a.clusters()); err != nil {
 				log.Debug(err)
-				continue
 			}
 		case edsURL:
 			for _, r := range resp.GetResources() {
@@ -205,10 +204,12 @@ func (c *Client) Receive(stream adsStream) error {
 				if !ok {
 					continue
 				}
-				c.assignments.setClusterLoadAssignment(cla.GetClusterName(), cla)
-				// ack the bloody thing
+				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
 			}
-			log.Debugf("Endpoint discovery processed with %d resources", len(resp.GetResources()))
+			log.Debugf("Endpoint discovery processed with %d resources, version %q and nonce %q, clusters: %v", len(resp.GetResources()), c.Version(edsURL), c.Nonce(edsURL), c.assignments.clusters())
+			// set our local administration and ack the reply. Empty version would signal NACK.
+			c.SetNonce(edsURL, resp.GetNonce())
+			c.SetVersion(edsURL, resp.GetVersionInfo())
 
 		default:
 			return fmt.Errorf("unknown response URL for discovery: %q", resp.GetTypeUrl())
@@ -218,4 +219,9 @@ func (c *Client) Receive(stream adsStream) error {
 
 // Select returns an address that is deemed to be the correct one for this cluster. The returned
 // boolean indicates if the cluster exists.
-func (c *Client) Select(cluster string) (net.IP, bool) { return c.assignments.Select(cluster) }
+func (c *Client) Select(cluster string) (net.IP, bool) {
+	if cluster == "" {
+		return nil, false
+	}
+	return c.assignments.Select(cluster)
+}

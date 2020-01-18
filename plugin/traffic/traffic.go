@@ -28,17 +28,12 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 	cluster := ""
 	for _, o := range t.origins {
-		println(o, state.Name())
 		if strings.HasSuffix(state.Name(), o) {
 			cluster, _ = dnsutil.TrimZone(state.Name(), o)
 			state.Zone = o
 			break
 		}
 	}
-	if cluster == "" {
-		return plugin.NextOrFailure(t.Name(), t.Next, ctx, w, r)
-	}
-
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Authoritative = true

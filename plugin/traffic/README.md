@@ -20,10 +20,13 @@ be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to 
 endpoints need to be drained from it.
 
 *Traffic* discovers the endpoints via Envoy's xDS protocol. Endpoints and clusters are discovered
-every 10 seconds. The plugin hands out responses that adhere to these assignments. Each DNS response
-contains a single IP address that's considered the best one. *Traffic* will load balance A and AAAA
-queries. The TTL on these answer is set to 5s. It will only return successful responses either with
-an answer or otherwise a NODATA response. Queries for non-existent clusters get a NXDOMAIN.
+every 10 seconds. The plugin hands out responses that adhere to these assignments. Only endpoints
+that are *healthy* are handed out.
+
+Each DNS response contains a single IP address that's considered the best one. *Traffic* will load
+balance A and AAAA queries. The TTL on these answer is set to 5s. It will only return successful
+responses either with an answer or otherwise a NODATA response. Queries for non-existent clusters
+get a NXDOMAIN.
 
 The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
 acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new
@@ -74,12 +77,11 @@ and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to 
 
 ## Metrics
 
-What metrics should we do?
+What metrics should we do? If any? Number of clusters? Number of endpoints and health?
 
 ## Ready
 
-Should this plugin implement readyness?
-
+Should this plugin implement readiness?
 
 ## Examples
 
@@ -108,8 +110,7 @@ The following documents provide some background on Envoy's control plane.
 
 ## Bugs
 
-Priority from ClusterLoadAssignments is not used. Locality is also not used. Health status of the
-endpoints is ignore (for now).
+Priority and locality information from ClusterLoadAssignments is not used.
 
 Load reporting via xDS is not supported; this can be implemented, but there are some things that
 make this difficult. A single (DNS) query is done by a resolver. Behind this resolver there may be
@@ -121,9 +122,8 @@ Multiple **TO** addresses is not implemented.
 
 ## TODO
 
-* acking responses
-* correctly tracking versions and pruning old clusters.
 * metrics?
-* how to exactly deal with health status from the endpoints.
-* testing
+* more and better testing
 * credentials (other than TLS) - how/what?
+* is the protocol correctly implemented? Should we not have a 10s tick, but wait for responses from
+  the control plane?
