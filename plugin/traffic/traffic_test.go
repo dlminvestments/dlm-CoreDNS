@@ -47,15 +47,22 @@ func TestTraffic(t *testing.T) {
 		{
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", corepb.HealthStatus_HEALTHY}}),
+				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.1",
+		},
+		{
+			cla: &xdspb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb.HealthStatus_HEALTHY}}),
+			},
+			cluster: "web", qtype: dns.TypeAAAA, rcode: dns.RcodeSuccess, answer: "::1",
 		},
 		// unknown backend
 		{
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", corepb.HealthStatus_UNKNOWN}}),
+				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, ns: true,
 		},
@@ -64,11 +71,31 @@ func TestTraffic(t *testing.T) {
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.1", corepb.HealthStatus_UNKNOWN},
-					{"127.0.0.2", corepb.HealthStatus_HEALTHY},
+					{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN},
+					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
+		},
+		// SRV query healthy backend
+		{
+			cla: &xdspb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints: endpoints([]EndpointHealth{
+					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+				}),
+			},
+			cluster: "web", qtype: dns.TypeSRV, rcode: dns.RcodeSuccess, answer: "endpoint-0.web.lb.example.org.",
+		},
+		// A query for endpoint-0.
+		{
+			cla: &xdspb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints: endpoints([]EndpointHealth{
+					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+				}),
+			},
+			cluster: "endpoint-0.web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
 		},
 	}
 
@@ -105,18 +132,19 @@ func TestTraffic(t *testing.T) {
 				addr = x.A.String()
 			case *dns.AAAA:
 				addr = x.AAAA.String()
+			case *dns.SRV:
+				addr = x.Target
 			}
 			if tc.answer != addr {
 				t.Errorf("Test %d: Expected answer %s, but got %s", i, tc.answer, addr)
 			}
-
 		}
-
 	}
 }
 
 type EndpointHealth struct {
 	Address string
+	Port    uint16
 	Health  corepb.HealthStatus
 }
 
@@ -131,6 +159,9 @@ func endpoints(e []EndpointHealth) []*endpointpb.LocalityLbEndpoints {
 							Address: &corepb.Address_SocketAddress{
 								SocketAddress: &corepb.SocketAddress{
 									Address: e[i].Address,
+									PortSpecifier: &corepb.SocketAddress_PortValue{
+										PortValue: uint32(e[i].Port),
+									},
 								},
 							},
 						},

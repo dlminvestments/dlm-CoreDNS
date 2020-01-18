@@ -24,10 +24,13 @@ endpoints need to be drained from it.
 discovered every 10 seconds. The plugin hands out responses that adhere to these assignments. Only
 endpoints that are *healthy* are handed out.
 
-Each DNS response contains a single IP address that's considered the best one. *Traffic* will load
-balance A and AAAA queries. The TTL on these answer is set to 5s. It will only return successful
-responses either with an answer or otherwise a NODATA response. Queries for non-existent clusters
-get a NXDOMAIN, where the minimal TTL is also set to 5s.
+Each DNS response contains a single IP address (or SRV record) that's considered the best one.
+*Traffic* will load balance A, AAAA and SRV queries. The TTL on these answer is set to 5s. It will
+only return successful responses either with an answer or otherwise a NODATA response. Queries for
+non-existent clusters get a NXDOMAIN, where the minimal TTL is also set to 5s.
+
+When an SRV record is returned an endpoint DNS name is synthesized `endpoint-0.<cluster>.<zone>` that
+carries the IP address. Querying for these synthesized names works as well.
 
 The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
 acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new
@@ -37,7 +40,7 @@ Load reporting is not supported for the following reason. A DNS query is done by
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
 responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
-the load reporting from *trafifc* highly inaccurate.
+the load reporting from *traffic* highly inaccurate.
 
 ## Syntax
 
@@ -96,7 +99,6 @@ established to the control plane.
 If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
 
 * `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
-
 
 ## Examples
 

@@ -59,12 +59,11 @@ func (a *assignment) clusters() []string {
 	return clusters
 }
 
-// Select selects a backend from cluster load assignments, using weighted random selection. It only selects
-// backends that are reporting healthy.
-func (a *assignment) Select(cluster string) (net.IP, bool) {
+// Select selects a backend from cluster load assignments, using weighted random selection. It only selects backends that are reporting healthy.
+func (a *assignment) Select(cluster string) (ip net.IP, port uint16, exists bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
-		return nil, false
+		return nil, 0, false
 	}
 
 	total := 0
@@ -79,7 +78,7 @@ func (a *assignment) Select(cluster string) (net.IP, bool) {
 		}
 	}
 	if healthy == 0 {
-		return nil, true
+		return nil, 0, true
 	}
 
 	if total == 0 {
@@ -92,12 +91,14 @@ func (a *assignment) Select(cluster string) (net.IP, bool) {
 					continue
 				}
 				if r == i {
-					return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
+					addr := net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
+					port := uint16(lb.GetEndpoint().GetAddress().GetSocketAddress().GetPortValue())
+					return addr, port, true
 				}
 				i++
 			}
 		}
-		return nil, true
+		return nil, 0, true
 	}
 
 	r := rand.Intn(total) + 1
@@ -108,9 +109,11 @@ func (a *assignment) Select(cluster string) (net.IP, bool) {
 			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
 			if r <= 0 {
-				return net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress()), true
+				addr := net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
+				port := uint16(lb.GetEndpoint().GetAddress().GetSocketAddress().GetPortValue())
+				return addr, port, true
 			}
 		}
 	}
-	return nil, true
+	return nil, 0, true
 }

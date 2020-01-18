@@ -228,9 +228,9 @@ func (c *Client) receive(stream adsStream) error {
 
 // Select returns an address that is deemed to be the correct one for this cluster. The returned
 // boolean indicates if the cluster exists.
-func (c *Client) Select(cluster string) (net.IP, bool) {
+func (c *Client) Select(cluster string) (net.IP, uint16, bool) {
 	if cluster == "" {
-		return nil, false
+		return nil, 0, false
 	}
 	return c.assignments.Select(cluster)
 }

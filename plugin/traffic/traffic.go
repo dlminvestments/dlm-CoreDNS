@@ -38,12 +38,27 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 	m.Authoritative = true
 
-	addr, ok := t.c.Select(cluster)
+	addr, port, ok := t.c.Select(cluster)
 	if !ok {
-		m.Ns = soa(state.Zone)
-		m.Rcode = dns.RcodeNameError
-		w.WriteMsg(m)
-		return 0, nil
+		// ok the cluster (which has potentially extra labels), doesn't exist, but we may have a query for endpoint-0.<cluster>.
+		// check if we have 2 labels and that the first equals endpoint-0.
+		if dns.CountLabel(cluster) != 2 {
+			m.Ns = soa(state.Zone)
+			m.Rcode = dns.RcodeNameError
+			w.WriteMsg(m)
+			return 0, nil
+		}
+		labels := dns.SplitDomainName(cluster)
+		if strings.Compare(labels[0], "endpoint-0") == 0 {
+			// recheck if the cluster exist.
+			addr, port, ok = t.c.Select(labels[1])
+			if !ok {
+				m.Ns = soa(state.Zone)
+				m.Rcode = dns.RcodeNameError
+				w.WriteMsg(m)
+				return 0, nil
+			}
+		}
 	}
 
 	if addr == nil {
@@ -66,7 +81,16 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			m.Ns = soa(state.Zone)
 			break
 		}
-		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, AAAA: addr}}
+		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: addr}}
+	case dns.TypeSRV:
+		target := dnsutil.Join("endpoint-0", cluster) + state.Zone
+		m.Answer = []dns.RR{&dns.SRV{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
+			Priority: 100, Weight: 100, Port: port, Target: target}}
+		if addr.To4() == nil {
+			m.Extra = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, AAAA: addr}}
+		} else {
+			m.Extra = []dns.RR{&dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: addr}}
+		}
 	default:
 		m.Ns = soa(state.Zone)
 	}
