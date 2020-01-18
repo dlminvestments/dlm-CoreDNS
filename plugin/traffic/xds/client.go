@@ -70,7 +70,7 @@ func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 		return nil, err
 	}
 	hostname, _ := os.Hostname()
-	c := &Client{cc: cc, node: &corepb.Node{Id: node,
+	c := &Client{cc: cc, to: addr, node: &corepb.Node{Id: node,
 		Metadata: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"HOSTNAME": {

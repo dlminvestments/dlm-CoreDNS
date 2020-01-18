@@ -117,7 +117,6 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 	if t.c, err = xds.New(toHosts[0], node, opts...); err != nil {
 		return nil, err
 	}
-	t.to = toHosts[0]
 
 	return t, nil
 }
