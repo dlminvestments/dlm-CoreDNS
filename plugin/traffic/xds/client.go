@@ -110,7 +110,7 @@ func (c *Client) Run() {
 		}
 
 		if first {
-			log.Info("gRPC stream established to %q", c.to)
+			log.Infof("gRPC stream established to %q", c.to)
 			c.setSynced()
 			first = false
 		}

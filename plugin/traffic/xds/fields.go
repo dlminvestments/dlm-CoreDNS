@@ -1,13 +1,13 @@
 package xds
 
-// Assignment returns the current assignment map.
+// Assignments returns the current assignment map.
 func (c *Client) Assignments() *assignment {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.assignments
 }
 
-// SetAssignment sets the assignment map.
+// SetAssignments sets the assignment map.
 func (c *Client) SetAssignments(a *assignment) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -42,14 +42,14 @@ func (c *Client) SetNonce(typeURL, n string) {
 	c.nonce[typeURL] = n
 }
 
-// SetSynced sets the synced boolean to true.
+// setSynced sets the synced boolean to true.
 func (c *Client) setSynced() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.synced = true
 }
 
-// Synced return true if the clients has synced.
+// HasSynced return true if the clients has synced.
 func (c *Client) HasSynced() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
