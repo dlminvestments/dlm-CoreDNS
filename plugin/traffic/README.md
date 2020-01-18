@@ -88,7 +88,7 @@ What metrics should we do? If any? Number of clusters? Number of endpoints and h
 
 ## Ready
 
-This plugin report readiness to the ready plugin. This will happen after a gRPC stream has been
+This plugin report readiness to the *ready* plugin. This will happen after a gRPC stream has been
 established to the control plane.
 
 ## Metrics
