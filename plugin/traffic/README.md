@@ -40,7 +40,8 @@ traffic TO...
 
 This enabled the *traffic* plugin, with a default node id of `coredns` and no TLS.
 
-*  **TO...** are the Envoy control plane endpoint to connect to. This must start with `grpc://`.
+*  **TO...** are the Envoy control plane endpoint to connect to. This must start with `grpc://`. The
+  port number defaults to 443.
 
 The extended syntax is available is you want more control.
 
@@ -81,7 +82,8 @@ What metrics should we do? If any? Number of clusters? Number of endpoints and h
 
 ## Ready
 
-Should this plugin implement readiness?
+This plugin report readiness to the ready plugin. This will happen after a gRPC stream has been
+established to an upstream.
 
 ## Examples
 
@@ -123,7 +125,6 @@ Multiple **TO** addresses is not implemented.
 ## TODO
 
 * metrics?
-* more and better testing
 * credentials (other than TLS) - how/what?
 * is the protocol correctly implemented? Should we not have a 10s tick, but wait for responses from
   the control plane?

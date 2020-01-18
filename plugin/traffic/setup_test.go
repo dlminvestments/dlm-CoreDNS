@@ -7,12 +7,10 @@ import (
 )
 
 func TestSetup(t *testing.T) {
-	/*
-		c := caddy.NewTestController("dns", `traffic grpc://bla`)
-		if err := setup(c); err != nil {
-			t.Fatalf("Test 1, expected no errors, but got: %q", err)
-		}
-	*/
+	c := caddy.NewTestController("dns", `traffic grpc://127.0.0.1`)
+	if err := setup(c); err != nil {
+		t.Fatalf("Test 1, expected no errors, but got: %q", err)
+	}
 }
 
 func TestParseTraffic(t *testing.T) {

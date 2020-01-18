@@ -52,14 +52,15 @@ type adsStream adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClien
 type Client struct {
 	cc          *grpc.ClientConn
 	ctx         context.Context
-	assignments *assignment // assignments contains the current clusters and endpoints.
 	node        *corepb.Node
 	cancel      context.CancelFunc
 	stop        chan struct{}
-	mu          sync.RWMutex
-
-	version map[string]string
-	nonce   map[string]string
+	to          string       // upstream hosts, mostly here for logging purposes
+	mu          sync.RWMutex // protects everything below
+	assignments *assignment  // assignments contains the current clusters and endpoints
+	version     map[string]string
+	nonce       map[string]string
+	synced      bool // true when we first successfully got a stream
 }
 
 // New returns a new client that's dialed to addr using node as the local identifier.
@@ -92,6 +93,7 @@ func (c *Client) Stop() error { c.cancel(); return c.cc.Close() }
 
 // Run starts all goroutines and gathers the clusters and endpoint information from the upstream manager.
 func (c *Client) Run() {
+	first := true
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -105,6 +107,12 @@ func (c *Client) Run() {
 			log.Debug(err)
 			time.Sleep(2 * time.Second) // grpc's client.go does more spiffy exp. backoff, do we really need that?
 			continue
+		}
+
+		if first {
+			log.Info("gRPC stream established to %q", c.to)
+			c.setSynced()
+			first = false
 		}
 
 		done := make(chan struct{})
@@ -128,7 +136,7 @@ func (c *Client) Run() {
 			}
 		}()
 
-		if err := c.Receive(stream); err != nil {
+		if err := c.receive(stream); err != nil {
 			log.Warning(err)
 		}
 		close(done)
@@ -159,8 +167,8 @@ func (c *Client) endpointDiscovery(stream adsStream, version, nonce string, clus
 	return stream.Send(req)
 }
 
-// Receive receives from the stream, it handled both cluster and endpoint DiscoveryResponses.
-func (c *Client) Receive(stream adsStream) error {
+// receive receives from the stream, it handled both cluster and endpoint DiscoveryResponses.
+func (c *Client) receive(stream adsStream) error {
 	for {
 		resp, err := stream.Recv()
 		if err != nil {
@@ -182,7 +190,7 @@ func (c *Client) Receive(stream adsStream) error {
 				}
 				a.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
-			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q, clusters: %v", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL), a.clusters())
+			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL))
 			// set our local administration and ack the reply. Empty version would signal NACK.
 			c.SetNonce(cdsURL, resp.GetNonce())
 			c.SetVersion(cdsURL, resp.GetVersionInfo())
@@ -206,7 +214,7 @@ func (c *Client) Receive(stream adsStream) error {
 				}
 				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
 			}
-			log.Debugf("Endpoint discovery processed with %d resources, version %q and nonce %q, clusters: %v", len(resp.GetResources()), c.Version(edsURL), c.Nonce(edsURL), c.assignments.clusters())
+			log.Debugf("Endpoint discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(edsURL), c.Nonce(edsURL))
 			// set our local administration and ack the reply. Empty version would signal NACK.
 			c.SetNonce(edsURL, resp.GetNonce())
 			c.SetVersion(edsURL, resp.GetVersionInfo())
