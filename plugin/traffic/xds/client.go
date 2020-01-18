@@ -191,6 +191,7 @@ func (c *Client) receive(stream adsStream) error {
 				a.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
 			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL))
+			ClusterGauge.WithLabelValues().Set(float64(len(resp.GetResources())))
 			// set our local administration and ack the reply. Empty version would signal NACK.
 			c.SetNonce(cdsURL, resp.GetNonce())
 			c.SetVersion(cdsURL, resp.GetVersionInfo())

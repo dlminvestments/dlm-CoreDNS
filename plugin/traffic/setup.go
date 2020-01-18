@@ -9,6 +9,7 @@ import (
 
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/metrics"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/plugin/pkg/parse"
 	pkgtls "github.com/coredns/coredns/plugin/pkg/tls"
@@ -38,6 +39,7 @@ func setup(c *caddy.Controller) error {
 
 	c.OnStartup(func() error {
 		go t.c.Run()
+		metrics.MustRegister(c, xds.ClusterGauge)
 		return nil
 	})
 	c.OnShutdown(func() error { return t.c.Stop() })

@@ -91,6 +91,13 @@ What metrics should we do? If any? Number of clusters? Number of endpoints and h
 This plugin report readiness to the ready plugin. This will happen after a gRPC stream has been
 established to the control plane.
 
+## Metrics
+
+If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
+
+* `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
+
+
 ## Examples
 
 ~~~
@@ -123,7 +130,6 @@ is not implemented.
 
 ## TODO
 
-* metrics?
 * credentials (other than TLS) - how/what?
 * is the protocol correctly implemented? Should we not have a 10s tick, but wait for responses from
   the control plane?
