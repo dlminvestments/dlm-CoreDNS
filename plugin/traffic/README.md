@@ -8,29 +8,36 @@
 
 The *traffic* plugin is a balancer that allows traffic steering, weighted responses
 and draining of clusters. The cluster information is retrieved from a service
-discovery manager that implements the service discovery protocols that Envoy
-[implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol).
+discovery manager that implements the service discovery protocols from Envoy
+[implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol). It connect to the
+manager using the Aggregated Discovery Service (ADS) protocol.
 
-A Cluster is defined as: "A group of logically similar endpoints that Envoy connects to." Each
-cluster has a name, which *traffic* extends to be a domain name. See "Naming Clusters" below.
+A Cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy connects to."
+Each cluster has a name, which *traffic* extends to be a domain name. See "Naming Clusters" below.
 
 The use case for this plugin is when a cluster has endpoints running in multiple (Kubernetes?)
 clusters and you need to steer traffic to (or away) from these endpoints, i.e. endpoint A needs to
 be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to upgraded, and *all*
 endpoints need to be drained from it.
 
-*Traffic* discovers the endpoints via Envoy's xDS protocol. Endpoints and clusters are discovered
-every 10 seconds. The plugin hands out responses that adhere to these assignments. Only endpoints
-that are *healthy* are handed out.
+*Traffic* discovers the endpoints via Envoy's xDS protocol (using ADS). Endpoints and clusters are
+discovered every 10 seconds. The plugin hands out responses that adhere to these assignments. Only
+endpoints that are *healthy* are handed out.
 
 Each DNS response contains a single IP address that's considered the best one. *Traffic* will load
 balance A and AAAA queries. The TTL on these answer is set to 5s. It will only return successful
 responses either with an answer or otherwise a NODATA response. Queries for non-existent clusters
-get a NXDOMAIN.
+get a NXDOMAIN, where the minimal TTL is also set to 5s.
 
 The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
 acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new
 assignment yet, it will still include this endpoint address in responses.
+
+Load reporting is not supported for the following reason. A DNS query is done by a resolver.
+Behind this resolver (which can also cache) there may be many clients that will use this reply. The
+responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
++1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
+the load reporting from *trafifc* highly inaccurate.
 
 ## Syntax
 
@@ -38,16 +45,15 @@ assignment yet, it will still include this endpoint address in responses.
 traffic TO...
 ~~~
 
-This enabled the *traffic* plugin, with a default node id of `coredns` and no TLS.
+This enabled the *traffic* plugin, with a default node ID of `coredns` and no TLS.
 
-*  **TO...** are the Envoy control plane endpoint to connect to. This must start with `grpc://`. The
-  port number defaults to 443.
+*  **TO...** are the control plane endpoints to connect to. These must start with `grpc://`. The
+  port number defaults to 443, if not specified.
 
-The extended syntax is available is you want more control.
+The extended syntax is available if you want more control.
 
 ~~~
 traffic TO... {
-    server SERVER [SERVER]...
     node ID
     tls CERT KEY CA
     tls_servername NAME
@@ -83,7 +89,7 @@ What metrics should we do? If any? Number of clusters? Number of endpoints and h
 ## Ready
 
 This plugin report readiness to the ready plugin. This will happen after a gRPC stream has been
-established to an upstream.
+established to the control plane.
 
 ## Examples
 
@@ -112,15 +118,8 @@ The following documents provide some background on Envoy's control plane.
 
 ## Bugs
 
-Priority and locality information from ClusterLoadAssignments is not used.
-
-Load reporting via xDS is not supported; this can be implemented, but there are some things that
-make this difficult. A single (DNS) query is done by a resolver. Behind this resolver there may be
-many clients that will use this reply, the responding server (CoreDNS) has no idea how many clients
-use this resolver. So reporting a load of +1 on the CoreDNS side can be anything from 1 to 1000+,
-making the load reporting highly inaccurate.
-
-Multiple **TO** addresses is not implemented.
+Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
+is not implemented.
 
 ## TODO
 
