@@ -62,7 +62,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				w.WriteMsg(m)
 				return 0, nil
 			}
-			return t.ServeEndpoint(ctx, state, labels[0], cluster)
+			return t.serveEndpoint(ctx, state, labels[0], cluster)
 		}
 	}
 
@@ -110,7 +110,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	return 0, nil
 }
 
-func (t *Traffic) ServeEndpoint(ctx context.Context, state request.Request, endpoint, cluster string) (int, error) {
+func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endpoint, cluster string) (int, error) {
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	m.Authoritative = true
