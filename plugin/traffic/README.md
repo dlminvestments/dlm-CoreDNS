@@ -62,6 +62,7 @@ traffic TO... {
     node ID
     tls CERT KEY CA
     tls_servername NAME
+    ignore_health
 }
 ~~~
 
@@ -78,6 +79,7 @@ traffic TO... {
 
 * `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is needed
   because *traffic* connects to an IP address, so it can't infer the server name from it.
+* `ignore_health` can be enabled to ignore endpoint health status, this can aid when debugging.
 
 ## Naming Clusters
 

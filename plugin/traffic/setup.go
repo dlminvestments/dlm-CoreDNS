@@ -101,6 +101,8 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 					return nil, c.ArgErr()
 				}
 				tlsServerName = c.Val()
+			case "ignore_health":
+				t.health = true
 			default:
 				return nil, c.Errf("unknown property '%s'", c.Val())
 			}

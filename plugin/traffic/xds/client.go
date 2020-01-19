@@ -227,17 +227,17 @@ func (c *Client) receive(stream adsStream) error {
 
 // Select returns an address that is deemed to be the correct one for this cluster. The returned
 // boolean indicates if the cluster exists.
-func (c *Client) Select(cluster string) (*SocketAddress, bool) {
+func (c *Client) Select(cluster string, ignore bool) (*SocketAddress, bool) {
 	if cluster == "" {
 		return nil, false
 	}
-	return c.assignments.Select(cluster)
+	return c.assignments.Select(cluster, ignore)
 }
 
 // All returns all endpoints.
-func (c *Client) All(cluster string) ([]*SocketAddress, bool) {
+func (c *Client) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
 	if cluster == "" {
 		return nil, false
 	}
-	return c.assignments.All(cluster)
+	return c.assignments.All(cluster, ignore)
 }

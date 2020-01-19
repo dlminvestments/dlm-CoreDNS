@@ -36,6 +36,7 @@ Then for CoreDNS, check out the `traffic` branch, create a Corefile:
 example.org {
     traffic grpc://127.0.0.1:18000 {
         id test-id
+        ignore_health
     }
     debug
 }

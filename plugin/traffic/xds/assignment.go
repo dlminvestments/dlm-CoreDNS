@@ -67,7 +67,7 @@ func (a *assignment) clusters() []string {
 }
 
 // Select selects a endpoint from cluster load assignments, using weighted random selection. It only selects endpoints that are reporting healthy.
-func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
+func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
@@ -77,7 +77,7 @@ func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
 	healthy := 0
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
 			total += int(lb.GetLoadBalancingWeight().GetValue())
@@ -94,7 +94,7 @@ func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
 		i := 0
 		for _, ep := range cla.Endpoints {
 			for _, lb := range ep.GetLbEndpoints() {
-				if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 					continue
 				}
 				if r == i {
@@ -109,7 +109,7 @@ func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
 	r := rand.Intn(total) + 1
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
@@ -122,7 +122,7 @@ func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
 }
 
 // All returns all healthy endpoints.
-func (a *assignment) All(cluster string) ([]*SocketAddress, bool) {
+func (a *assignment) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
@@ -131,7 +131,7 @@ func (a *assignment) All(cluster string) ([]*SocketAddress, bool) {
 	sa := []*SocketAddress{}
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
 			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()})
