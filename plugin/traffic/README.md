@@ -79,7 +79,7 @@ traffic TO... {
 
 * `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is needed
   because *traffic* connects to an IP address, so it can't infer the server name from it.
-* `ignore_health` can be enabled to ignore endpoint health status, this can aid when debugging.
+* `ignore_health` can be enabled to ignore endpoint health status, this can aid in debugging.
 
 ## Naming Clusters
 
@@ -91,18 +91,14 @@ and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to 
 
 ## Metrics
 
-What metrics should we do? If any? Number of clusters? Number of endpoints and health?
+If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
+
+* `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
 
 ## Ready
 
 This plugin report readiness to the *ready* plugin. This will happen after a gRPC stream has been
 established to the control plane.
-
-## Metrics
-
-If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
-
-* `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
 
 ## Examples
 
@@ -132,10 +128,4 @@ The following documents provide some background on Envoy's control plane.
 ## Bugs
 
 Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
-is not implemented.
-
-## TODO
-
-* credentials (other than TLS) - how/what?
-* is the protocol correctly implemented? Should we not have a 10s tick, but wait for responses from
-  the control plane?
+is not implemented. Credentials are not implemented.
