@@ -42,6 +42,9 @@ example.org {
 }
 ~~~
 
+You'll need `ignore_health` because the test binary sets the health status to UNKNOWN and this would
+mean CoreDNS doesn't return any (useful) data.
+
 Start CoreDNS (`coredns -conf Corefile -dns.port=1053`), and see logging/debugging flow by; the
 test binary should also spew out a bunch of things. CoreDNS willl build up a list of cluster and
 endpoints. Next you can query it. Note none of the endpoints are HEALTHY so you'll mostly get NODATA
