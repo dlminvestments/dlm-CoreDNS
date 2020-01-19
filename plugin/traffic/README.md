@@ -24,13 +24,15 @@ endpoints need to be drained from it.
 discovered every 10 seconds. The plugin hands out responses that adhere to these assignments. Only
 endpoints that are *healthy* are handed out.
 
-Each DNS response contains a single IP address (or SRV record) that's considered the best one.
-*Traffic* will load balance A, AAAA and SRV queries. The TTL on these answer is set to 5s. It will
-only return successful responses either with an answer or otherwise a NODATA response. Queries for
-non-existent clusters get a NXDOMAIN, where the minimal TTL is also set to 5s.
+For A and AAAA queries each DNS response contains a single IP address that's considered the best
+one. The TTL on these answer is set to 5s. It will only return successful responses either with an
+answer or otherwise a NODATA response. Queries for non-existent clusters get a NXDOMAIN, where the
+minimal TTL is also set to 5s.
 
-When an SRV record is returned an endpoint DNS name is synthesized `endpoint-0.<cluster>.<zone>` that
-carries the IP address. Querying for these synthesized names works as well.
+For SRV queries all healthy backends will be returned - assuming the client doing the query is smart
+enough to select the best one. When SRV records are returned, the endpoint DNS names are synthesized
+`endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these synthesized names
+works as well.
 
 The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
 acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new

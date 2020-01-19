@@ -9,6 +9,13 @@ import (
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
+type SocketAddress struct {
+	*corepb.SocketAddress
+}
+
+func (s *SocketAddress) Address() net.IP { return net.ParseIP(s.GetAddress()) }
+func (s *SocketAddress) Port() uint16    { return uint16(s.GetPortValue()) }
+
 type assignment struct {
 	mu  sync.RWMutex
 	cla map[string]*xdspb.ClusterLoadAssignment
@@ -59,11 +66,11 @@ func (a *assignment) clusters() []string {
 	return clusters
 }
 
-// Select selects a backend from cluster load assignments, using weighted random selection. It only selects backends that are reporting healthy.
-func (a *assignment) Select(cluster string) (ip net.IP, port uint16, exists bool) {
+// Select selects a endpoint from cluster load assignments, using weighted random selection. It only selects endpoints that are reporting healthy.
+func (a *assignment) Select(cluster string) (*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
-		return nil, 0, false
+		return nil, false
 	}
 
 	total := 0
@@ -78,7 +85,7 @@ func (a *assignment) Select(cluster string) (ip net.IP, port uint16, exists bool
 		}
 	}
 	if healthy == 0 {
-		return nil, 0, true
+		return nil, true
 	}
 
 	if total == 0 {
@@ -91,14 +98,12 @@ func (a *assignment) Select(cluster string) (ip net.IP, port uint16, exists bool
 					continue
 				}
 				if r == i {
-					addr := net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
-					port := uint16(lb.GetEndpoint().GetAddress().GetSocketAddress().GetPortValue())
-					return addr, port, true
+					return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()}, true
 				}
 				i++
 			}
 		}
-		return nil, 0, true
+		return nil, true
 	}
 
 	r := rand.Intn(total) + 1
@@ -109,11 +114,28 @@ func (a *assignment) Select(cluster string) (ip net.IP, port uint16, exists bool
 			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
 			if r <= 0 {
-				addr := net.ParseIP(lb.GetEndpoint().GetAddress().GetSocketAddress().GetAddress())
-				port := uint16(lb.GetEndpoint().GetAddress().GetSocketAddress().GetPortValue())
-				return addr, port, true
+				return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()}, true
 			}
 		}
 	}
-	return nil, 0, true
+	return nil, true
+}
+
+// All returns all healthy endpoints.
+func (a *assignment) All(cluster string) ([]*SocketAddress, bool) {
+	cla := a.ClusterLoadAssignment(cluster)
+	if cla == nil {
+		return nil, false
+	}
+
+	sa := []*SocketAddress{}
+	for _, ep := range cla.Endpoints {
+		for _, lb := range ep.GetLbEndpoints() {
+			if lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				continue
+			}
+			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()})
+		}
+	}
+	return sa, true
 }

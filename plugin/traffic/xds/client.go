@@ -23,7 +23,6 @@ package xds
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -228,9 +227,17 @@ func (c *Client) receive(stream adsStream) error {
 
 // Select returns an address that is deemed to be the correct one for this cluster. The returned
 // boolean indicates if the cluster exists.
-func (c *Client) Select(cluster string) (net.IP, uint16, bool) {
+func (c *Client) Select(cluster string) (*SocketAddress, bool) {
 	if cluster == "" {
-		return nil, 0, false
+		return nil, false
 	}
 	return c.assignments.Select(cluster)
+}
+
+// All returns all endpoints.
+func (c *Client) All(cluster string) ([]*SocketAddress, bool) {
+	if cluster == "" {
+		return nil, false
+	}
+	return c.assignments.All(cluster)
 }

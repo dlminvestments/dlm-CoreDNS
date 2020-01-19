@@ -2,6 +2,8 @@ package traffic
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,11 +36,12 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			break
 		}
 	}
+
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Authoritative = true
 
-	addr, port, ok := t.c.Select(cluster)
+	sockaddr, ok := t.c.Select(cluster)
 	if !ok {
 		// ok the cluster (which has potentially extra labels), doesn't exist, but we may have a query for endpoint-0.<cluster>.
 		// check if we have 2 labels and that the first equals endpoint-0.
@@ -49,25 +52,96 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			return 0, nil
 		}
 		labels := dns.SplitDomainName(cluster)
-		if strings.Compare(labels[0], "endpoint-0") == 0 {
+		if strings.HasPrefix(labels[0], "endpoint-") {
 			// recheck if the cluster exist.
-			addr, port, ok = t.c.Select(labels[1])
+			cluster = labels[1]
+			sockaddr, ok = t.c.Select(cluster)
 			if !ok {
 				m.Ns = soa(state.Zone)
 				m.Rcode = dns.RcodeNameError
 				w.WriteMsg(m)
 				return 0, nil
 			}
+			return t.ServeEndpoint(ctx, state, labels[0], cluster)
 		}
 	}
 
-	if addr == nil {
+	if sockaddr == nil {
 		log.Debugf("No (healthy) endpoints found for %q", cluster)
 		m.Ns = soa(state.Zone)
 		w.WriteMsg(m)
 		return 0, nil
 	}
 
+	switch state.QType() {
+	case dns.TypeA:
+		if sockaddr.Address().To4() == nil { // it's an IPv6 address, return nodata in that case.
+			m.Ns = soa(state.Zone)
+			break
+		}
+		m.Answer = []dns.RR{&dns.A{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: sockaddr.Address()}}
+
+	case dns.TypeAAAA:
+		if sockaddr.Address().To4() != nil { // it's an IPv4 address, return nodata in that case.
+			m.Ns = soa(state.Zone)
+			break
+		}
+		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
+	case dns.TypeSRV:
+		sockaddrs, _ := t.c.All(cluster)
+		for i, sa := range sockaddrs {
+			target := fmt.Sprintf("endpoint-%d.%s.%s", i, cluster, state.Zone)
+
+			m.Answer = append(m.Answer, &dns.SRV{
+				Hdr:      dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
+				Priority: 100, Weight: 100, Port: sa.Port(), Target: target})
+
+			if sa.Address().To4() == nil {
+				m.Extra = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, AAAA: sa.Address()}}
+			} else {
+				m.Extra = []dns.RR{&dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: sa.Address()}}
+			}
+		}
+	default:
+		m.Ns = soa(state.Zone)
+	}
+
+	w.WriteMsg(m)
+	return 0, nil
+}
+
+func (t *Traffic) ServeEndpoint(ctx context.Context, state request.Request, endpoint, cluster string) (int, error) {
+	m := new(dns.Msg)
+	m.SetReply(state.Req)
+	m.Authoritative = true
+
+	// get endpoint number
+	i := strings.Index(endpoint, "-")
+	if i == -1 || i == len(endpoint) {
+		m.Ns = soa(state.Zone)
+		m.Rcode = dns.RcodeNameError
+		state.W.WriteMsg(m)
+		return 0, nil
+	}
+
+	end := endpoint[i+1:] // +1 to remove '-'
+	nr, err := strconv.Atoi(end)
+	if err != nil {
+		m.Ns = soa(state.Zone)
+		m.Rcode = dns.RcodeNameError
+		state.W.WriteMsg(m)
+		return 0, nil
+	}
+
+	sockaddrs, _ := t.c.All(cluster)
+	if len(sockaddrs) < nr {
+		m.Ns = soa(state.Zone)
+		m.Rcode = dns.RcodeNameError
+		state.W.WriteMsg(m)
+		return 0, nil
+	}
+
+	addr := sockaddrs[nr].Address()
 	switch state.QType() {
 	case dns.TypeA:
 		if addr.To4() == nil { // it's an IPv6 address, return nodata in that case.
@@ -82,20 +156,11 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			break
 		}
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: addr}}
-	case dns.TypeSRV:
-		target := dnsutil.Join("endpoint-0", cluster) + state.Zone
-		m.Answer = []dns.RR{&dns.SRV{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5},
-			Priority: 100, Weight: 100, Port: port, Target: target}}
-		if addr.To4() == nil {
-			m.Extra = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, AAAA: addr}}
-		} else {
-			m.Extra = []dns.RR{&dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: addr}}
-		}
 	default:
 		m.Ns = soa(state.Zone)
 	}
 
-	w.WriteMsg(m)
+	state.W.WriteMsg(m)
 	return 0, nil
 }
 
