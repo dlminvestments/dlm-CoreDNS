@@ -9,12 +9,16 @@ import (
 	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
+// SocketAddress holds a corepb.SocketAddress.
 type SocketAddress struct {
 	*corepb.SocketAddress
 }
 
+// Address returns the address from s.
 func (s *SocketAddress) Address() net.IP { return net.ParseIP(s.GetAddress()) }
-func (s *SocketAddress) Port() uint16    { return uint16(s.GetPortValue()) }
+
+// Port returns the port from s.
+func (s *SocketAddress) Port() uint16 { return uint16(s.GetPortValue()) }
 
 type assignment struct {
 	mu  sync.RWMutex
