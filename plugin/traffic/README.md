@@ -117,6 +117,13 @@ If `locality` *has* been specified there is an extra step between 3 and 4.
     **REGION,ZONE** and then **REGION**. If still not match, move on the to next one. If we found
     none, we continue with step 4 above, ignoring any locality.
 
+### Metadata
+
+The metadata must be populated as follows (remains to be seen if this is the way to do it). There
+must be a field with the key `HEALTH_STATUS` and the string value must be `DRAINING`. These values
+are copied from Envoy protocol buffers. Anything other than `DRAINING` and `HEALTH_STATUS` or a
+missing metadata means *traffic* will ignore it.
+
 ## Metrics
 
 If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
