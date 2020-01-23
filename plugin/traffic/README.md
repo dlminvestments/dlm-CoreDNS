@@ -103,26 +103,17 @@ How are clients match against the data we receive from xDS endpoint? Ignoring `l
 it will go through the following steps:
 
 1. Does the cluster exist? If not return NXDOMAIN, otherwise continue.
-2. Check the cluster's metadata, if available and set to DRAINING, return a NODATA response,
-   otherwise continue.
-3. Run through the endpoints, discard any endpoints that are not HEALTHY. If we are left with no
+2. Run through the endpoints, discard any endpoints that are not HEALTHY. If we are left with no
    endpoint return a NODATA response, otherwise continue.
-4. If weights are assigned use those to pick an endpoint, otherwise randomly pick one and return a
+3. If weights are assigned use those to pick an endpoint, otherwise randomly pick one and return a
    response to the client.
 
-If `locality` *has* been specified there is an extra step between 3 and 4.
+If `locality` *has* been specified there is an extra step between 2 and 3.
 
-3a. Match the endpoints using the locality that groups several of them, it's the most specific match
+2a. Match the endpoints using the locality that groups several of them, it's the most specific match
     from left to right in the `locality` list; if no **REGION,ZONE,SUBZONE** matches then try
     **REGION,ZONE** and then **REGION**. If still not match, move on the to next one. If we found
     none, we continue with step 4 above, ignoring any locality.
-
-### Metadata
-
-The metadata must be populated as follows (remains to be seen if this is the way to do it). There
-must be a field with the key `HEALTH_STATUS` and the string value must be `DRAINING`. These values
-are copied from Envoy protocol buffers. Anything other than `DRAINING` and `HEALTH_STATUS` or a
-missing metadata means *traffic* will ignore it.
 
 ## Metrics
 
