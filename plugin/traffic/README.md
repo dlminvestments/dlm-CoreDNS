@@ -72,7 +72,8 @@ traffic TO... {
    considered local traffic. Each **REGION,ZONE,SUBZONE** will be used to match clusters again while generating
    responses. The list should descend in proximity. A `*` describes a wildcard match. I.e. when
    there are 3 regions, US, EU, ASIA, and this CoreDNS is running in EU, you can use:
-   `locality EU,*,* US,*,*, ASIA,*,*`.
+   `locality EU,*,* US,*,*, ASIA,*,*`. Only when the cluster's locality isn't UNKNOWN will this
+   matching happen.
 * `tls` **CERT** **KEY** **CA** define the TLS properties for gRPC connection. If this is omitted an
   insecure connection is attempted. From 0 to 3 arguments can be provided with the meaning as described below
 
