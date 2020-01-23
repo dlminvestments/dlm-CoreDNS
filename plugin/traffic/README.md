@@ -34,10 +34,6 @@ enough to select the best one. When SRV records are returned, the endpoint DNS n
 `endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these synthesized names
 works as well.
 
-The *traffic* plugin has no notion of draining, drop overload and anything that advanced, *it just
-acts upon assignments*. This is means that if a endpoint goes down and *traffic* has not seen a new
-assignment yet, it will still include this endpoint address in responses.
-
 Load reporting is not supported for the following reason. A DNS query is done by a resolver.
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
 responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
@@ -70,7 +66,7 @@ traffic TO... {
 *  `node` **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
 *  `locality` has a list of **REGION,ZONE,SUBZONE**s. These tell *traffic* where its running and what should be
    considered local traffic. Each **REGION,ZONE,SUBZONE** will be used to match clusters again while generating
-   responses. The list should descend in proximity. A `*` describes a wildcard match. I.e. when
+   responses. The list should descend in proximity. A `*` describes a wild card match. I.e. when
    there are 3 regions, US, EU, ASIA, and this CoreDNS is running in EU, you can use:
    `locality EU,*,* US,*,*, ASIA,*,*`. Only when the cluster's locality isn't UNKNOWN will this
    matching happen.
@@ -95,6 +91,31 @@ The *traffic* plugins uses the name(s) specified in the Server Block to create f
 domain names. For example if the Server Block specifies `lb.example.org` as one of the names,
 and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to query asking for
 `cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
+
+## Localized Endpoints
+
+Endpoints can be grouped by location, this location information is used if the `locality` property
+is used in the configuration.
+
+## Matching Algorithm
+
+How are clients match against the data we receive from xDS endpoint? Ignoring `locality` for now,
+it will go through the following steps:
+
+1. Does the cluster exist? If not return NXDOMAIN, otherwise continue.
+2. Check the cluster's metadata, if available and set to DRAINING, return a NODATA response,
+   otherwise continue.
+3. Run through the endpoints, discard any endpoints that are not HEALTHY. If we are left with no
+   endpoint return a NODATA response, otherwise continue.
+4. If weights are assigned use those to pick an endpoint, otherwise randomly pick one and return a
+   response to the client.
+
+If `locality` *has* been specified there is an extra step between 3 and 4.
+
+3a. Match the endpoints using the locality that groups several of them, it's the most specific match
+    from left to right in the `locality` list; if no **REGION,ZONE,SUBZONE** matches then try
+    **REGION,ZONE** and then **REGION**. If still not match, move on the to next one. If we found
+    none, we continue with step 4 above, ignoring any locality.
 
 ## Metrics
 
