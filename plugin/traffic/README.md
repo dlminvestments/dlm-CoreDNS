@@ -60,13 +60,19 @@ The extended syntax is available if you want more control.
 ~~~
 traffic TO... {
     node ID
+    locality REGION,ZONE,SUBZONE [REGION,ZONE,SUBZONE]...
     tls CERT KEY CA
     tls_servername NAME
     ignore_health
 }
 ~~~
 
-*  node **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
+*  `node` **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
+*  `locality` has a list of **REGION,ZONE,SUBZONE**s. These tell *traffic* where its running and what should be
+   considered local traffic. Each **REGION,ZONE,SUBZONE** will be used to match clusters again while generating
+   responses. The list should descend in proximity. A `*` describes a wildcard match. I.e. when
+   there are 3 regions, US, EU, ASIA, and this CoreDNS is running in EU, you can use:
+   `locality EU,*,* US,*,*, ASIA,*,*`.
 * `tls` **CERT** **KEY** **CA** define the TLS properties for gRPC connection. If this is omitted an
   insecure connection is attempted. From 0 to 3 arguments can be provided with the meaning as described below
 
