@@ -124,3 +124,10 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 
 	return t, nil
 }
+
+// parseLoc parses string s into loc's. Each loc must be space separated from the other, inside
+// a loc we have region,zone,subzone, where subzone or subzone and zone maybe empty. If specified
+// they must be comma separate (not spaces or anything).
+func parseLoc(s string) ([]loc, error) {
+	return nil, nil
+}

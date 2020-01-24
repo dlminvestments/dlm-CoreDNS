@@ -9,7 +9,7 @@
 The *traffic* plugin is a balancer that allows traffic steering, weighted responses
 and draining of clusters. The cluster information is retrieved from a service
 discovery manager that implements the service discovery protocols from Envoy
-[implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol). It connect to the
+[implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol). It connects to the
 manager using the Aggregated Discovery Service (ADS) protocol.
 
 A Cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy connects to."
@@ -48,41 +48,52 @@ traffic TO...
 
 This enabled the *traffic* plugin, with a default node ID of `coredns` and no TLS.
 
-*  **TO...** are the control plane endpoints to connect to. These must start with `grpc://`. The
-  port number defaults to 443, if not specified.
+ *  **TO...** are the control plane endpoints to connect to. These must start with `grpc://`. The
+    port number defaults to 443, if not specified.
 
 The extended syntax is available if you want more control.
 
 ~~~
 traffic TO... {
     node ID
-    locality REGION,ZONE,SUBZONE [REGION,ZONE,SUBZONE]...
+    locality REGION[,ZONE[,SUBZONE]] [REGION[,ZONE[,SUBZONE]]]...
     tls CERT KEY CA
     tls_servername NAME
     ignore_health
 }
 ~~~
 
-*  `node` **ID** is how *traffic* identifies itself to the control plane. This defaults to `coredns`.
-*  `locality` has a list of **REGION,ZONE,SUBZONE**s. These tell *traffic* where its running and what should be
-   considered local traffic. Each **REGION,ZONE,SUBZONE** will be used to match clusters again while generating
-   responses. The list should descend in proximity. A `*` describes a wild card match. I.e. when
-   there are 3 regions, US, EU, ASIA, and this CoreDNS is running in EU, you can use:
-   `locality EU,*,* US,*,*, ASIA,*,*`. Only when the cluster's locality isn't UNKNOWN will this
-   matching happen.
-* `tls` **CERT** **KEY** **CA** define the TLS properties for gRPC connection. If this is omitted an
-  insecure connection is attempted. From 0 to 3 arguments can be provided with the meaning as described below
+ *  `node` **ID** is how *traffic* identifies itself to the control plane. This defaults to
+    `coredns`.
 
-  * `tls` - no client authentication is used, and the system CAs are used to verify the server certificate
-  * `tls` **CA** - no client authentication is used, and the file CA is used to verify the server certificate
-  * `tls` **CERT** **KEY** - client authentication is used with the specified cert/key pair.
-    The server certificate is verified with the system CAs.
-  * `tls` **CERT** **KEY** **CA** - client authentication is used with the specified cert/key pair.
-    The server certificate is verified using the specified CA file.
+ *  `locality` has a list of **REGION,ZONE,SUBZONE** sets. These tell *traffic* where its running
+    and what should be considered local traffic. Each **REGION,ZONE,SUBZONE** set will be used
+    to match clusters against while generating responses. The list should descend in proximity.
+    **ZONE** or **ZONE** *and* **SUBZONE** may be omitted. This signifies a wild card match.
+    I.e. when there are 3 regions, US, EU, ASIA, and this CoreDNS is running in EU, you can use:
+    `locality EU US ASIA`. Each list must be separated using spaces. The elements within a set
+    should be separated with only a comma.
 
-* `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is needed
-  because *traffic* connects to an IP address, so it can't infer the server name from it.
-* `ignore_health` can be enabled to ignore endpoint health status, this can aid in debugging.
+ *  `tls` **CERT** **KEY** **CA** define the TLS properties for gRPC connection. If this is omitted
+    an insecure connection is attempted. From 0 to 3 arguments can be provided with the meaning as
+    described below
+
+     -  `tls` - no client authentication is used, and the system CAs are used to verify the server
+        certificate
+
+     -  `tls` **CA** - no client authentication is used, and the file CA is used to verify the
+        server certificate
+
+     -  `tls` **CERT** **KEY** - client authentication is used with the specified cert/key pair. The
+        server certificate is verified with the system CAs.
+
+     -  `tls` **CERT** **KEY** **CA** - client authentication is used with the specified cert/key
+        pair. The server certificate is verified using the specified CA file.
+
+ *  `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is
+    needed because *traffic* connects to an IP address, so it can't infer the server name from it.
+
+ *  `ignore_health` can be enabled to ignore endpoint health status, this can aid in debugging.
 
 ## Naming Clusters
 
@@ -99,27 +110,29 @@ is used in the configuration.
 
 ## Matching Algorithm
 
-How are clients match against the data we receive from xDS endpoint? Ignoring `locality` for now,
-it will go through the following steps:
+How are clients match against the data we receive from xDS endpoint? Ignoring `locality` for now, it
+will go through the following steps:
 
-1. Does the cluster exist? If not return NXDOMAIN, otherwise continue.
-2. Run through the endpoints, discard any endpoints that are not HEALTHY. If we are left with no
-   endpoint return a NODATA response, otherwise continue.
-3. If weights are assigned use those to pick an endpoint, otherwise randomly pick one and return a
-   response to the client.
+1.  Does the cluster exist? If not return NXDOMAIN, otherwise continue.
+
+2.  Run through the endpoints, discard any endpoints that are not HEALTHY. If we are left with no
+    endpoint return a NODATA response, otherwise continue.
+
+3.  If weights are assigned use those to pick an endpoint, otherwise randomly pick one and return a
+    response to the client.
 
 If `locality` *has* been specified there is an extra step between 2 and 3.
 
-2a. Match the endpoints using the locality that groups several of them, it's the most specific match
-    from left to right in the `locality` list; if no **REGION,ZONE,SUBZONE** matches then try
-    **REGION,ZONE** and then **REGION**. If still not match, move on the to next one. If we found
-    none, we continue with step 4 above, ignoring any locality.
+2a. Match the endpoints using the locality that groups several of them, it's the most specific
+match from left to right in the `locality` list; if no **REGION,ZONE,SUBZONE** matches then try
+**REGION,ZONE** and then **REGION**. If still not match, move on the to next one. If we found none,
+we continue with step 4 above, ignoring any locality.
 
 ## Metrics
 
 If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
 
-* `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
+ *  `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
 
 ## Ready
 

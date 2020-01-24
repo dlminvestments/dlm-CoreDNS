@@ -17,10 +17,11 @@ import (
 
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
-	c       *xds.Client
-	id      string
-	health  bool
-	origins []string
+	c        *xds.Client
+	id       string
+	health   bool
+	origins  []string
+	locality []loc
 
 	Next plugin.Handler
 }
@@ -181,3 +182,10 @@ func soa(z string) []dns.RR {
 
 // Name implements the plugin.Handler interface.
 func (t *Traffic) Name() string { return "traffic" }
+
+// loc holds the locality for this server. It a list of the set region, zone, subzone.
+type loc struct {
+	region  string
+	zone    string
+	subzone string
+}
