@@ -171,17 +171,19 @@ func TestTrafficLocality(t *testing.T) {
 		{
 			cla: &xdspb.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints: append(endpointsWithLocality([]EndpointHealth{
-					{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY},
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY}},
-					xds.Locality{Region: "us"}),
+				Endpoints: append(
+					endpointsWithLocality([]EndpointHealth{
+						{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY},
+						{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY}},
+						xds.Locality{Region: "us"}),
 					endpointsWithLocality([]EndpointHealth{
 						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY},
 						{"127.0.1.2", 18008, corepb.HealthStatus_HEALTHY}},
-						xds.Locality{Region: "eu"})...),
+						xds.Locality{Region: "eu"})...,
+				),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: 2,
-			loc: xds.Locality{Region: "eu"},
+			loc: xds.Locality{Region: "eu"}, // our location
 		},
 	}
 
