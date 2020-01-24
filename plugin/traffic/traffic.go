@@ -17,11 +17,11 @@ import (
 
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
-	c        *xds.Client
-	id       string
-	health   bool
-	origins  []string
-	locality []loc
+	c       *xds.Client
+	id      string
+	health  bool
+	origins []string
+	loc     []xds.Locality
 
 	Next plugin.Handler
 }
@@ -43,7 +43,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 	m.Authoritative = true
 
-	sockaddr, ok := t.c.Select(cluster, t.health)
+	sockaddr, ok := t.c.Select(cluster, t.loc, t.health)
 	if !ok {
 		// ok the cluster (which has potentially extra labels), doesn't exist, but we may have a query for endpoint-0.<cluster>.
 		// check if we have 2 labels and that the first equals endpoint-0.
@@ -57,7 +57,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		if strings.HasPrefix(labels[0], "endpoint-") {
 			// recheck if the cluster exist.
 			cluster = labels[1]
-			sockaddr, ok = t.c.Select(cluster, t.health)
+			sockaddr, ok = t.c.Select(cluster, t.loc, t.health)
 			if !ok {
 				m.Ns = soa(state.Zone)
 				m.Rcode = dns.RcodeNameError
@@ -90,7 +90,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		}
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
 	case dns.TypeSRV:
-		sockaddrs, _ := t.c.All(cluster, t.health)
+		sockaddrs, _ := t.c.All(cluster, t.loc, t.health)
 		for i, sa := range sockaddrs {
 			target := fmt.Sprintf("endpoint-%d.%s.%s", i, cluster, state.Zone)
 
@@ -135,7 +135,7 @@ func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endp
 		return 0, nil
 	}
 
-	sockaddrs, _ := t.c.All(cluster, t.health)
+	sockaddrs, _ := t.c.All(cluster, t.loc, t.health)
 	if len(sockaddrs) < nr {
 		m.Ns = soa(state.Zone)
 		m.Rcode = dns.RcodeNameError
@@ -182,10 +182,3 @@ func soa(z string) []dns.RR {
 
 // Name implements the plugin.Handler interface.
 func (t *Traffic) Name() string { return "traffic" }
-
-// loc holds the locality for this server. It a list of the set region, zone, subzone.
-type loc struct {
-	region  string
-	zone    string
-	subzone string
-}

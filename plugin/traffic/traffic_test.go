@@ -212,9 +212,18 @@ type EndpointHealth struct {
 }
 
 func endpoints(e []EndpointHealth) []*endpointpb.LocalityLbEndpoints {
+	return endpointsWithLocality(e, xds.Locality{})
+}
+
+func endpointsWithLocality(e []EndpointHealth, loc xds.Locality) []*endpointpb.LocalityLbEndpoints {
 	ep := make([]*endpointpb.LocalityLbEndpoints, len(e))
 	for i := range e {
 		ep[i] = &endpointpb.LocalityLbEndpoints{
+			Locality: &corepb.Locality{
+				Region:  loc.Region,
+				Zone:    loc.Zone,
+				SubZone: loc.SubZone,
+			},
 			LbEndpoints: []*endpointpb.LbEndpoint{{
 				HostIdentifier: &endpointpb.LbEndpoint_Endpoint{
 					Endpoint: &endpointpb.Endpoint{

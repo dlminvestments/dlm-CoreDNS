@@ -71,7 +71,7 @@ func (a *assignment) clusters() []string {
 }
 
 // Select selects a endpoint from cluster load assignments, using weighted random selection. It only selects endpoints that are reporting healthy.
-func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) {
+func (a *assignment) Select(cluster string, locality []Locality, ignore bool) (*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
@@ -126,7 +126,7 @@ func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) 
 }
 
 // All returns all healthy endpoints.
-func (a *assignment) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
+func (a *assignment) All(cluster string, locality []Locality, ignore bool) ([]*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false

@@ -125,9 +125,32 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 	return t, nil
 }
 
-// parseLoc parses string s into loc's. Each loc must be space separated from the other, inside
+// parseLocality parses string s into loc's. Each loc must be space separated from the other, inside
 // a loc we have region,zone,subzone, where subzone or subzone and zone maybe empty. If specified
 // they must be comma separate (not spaces or anything).
-func parseLoc(s string) ([]loc, error) {
-	return nil, nil
+func parseLocality(s string) ([]xds.Locality, error) {
+	sets := strings.Fields(s)
+	if len(sets) == 0 {
+		return nil, nil
+	}
+
+	locs := []xds.Locality{}
+	for _, s := range sets {
+		l := strings.Split(s, ",")
+		switch len(l) {
+		default:
+			return nil, fmt.Errorf("too many location specifiers: %q", s)
+		case 1:
+			locs = append(locs, xds.Locality{Region: l[0]})
+			continue
+		case 2:
+			locs = append(locs, xds.Locality{Region: l[0], Zone: l[1]})
+			continue
+		case 3:
+			locs = append(locs, xds.Locality{Region: l[0], Zone: l[1], SubZone: l[2]})
+			continue
+		}
+
+	}
+	return locs, nil
 }
