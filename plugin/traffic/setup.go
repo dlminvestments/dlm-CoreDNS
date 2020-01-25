@@ -141,13 +141,37 @@ func parseLocality(s string) ([]xds.Locality, error) {
 		default:
 			return nil, fmt.Errorf("too many location specifiers: %q", s)
 		case 1:
-			locs = append(locs, xds.Locality{Region: l[0]})
+			l0 := strings.TrimSpace(l[0])
+			if l0 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[0])
+			}
+			locs = append(locs, xds.Locality{Region: l0})
 			continue
 		case 2:
-			locs = append(locs, xds.Locality{Region: l[0], Zone: l[1]})
+			l0 := strings.TrimSpace(l[0])
+			if l0 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[0])
+			}
+			l1 := strings.TrimSpace(l[1])
+			if l1 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[1])
+			}
+			locs = append(locs, xds.Locality{Region: l0, Zone: l1})
 			continue
 		case 3:
-			locs = append(locs, xds.Locality{Region: l[0], Zone: l[1], SubZone: l[2]})
+			l0 := strings.TrimSpace(l[0])
+			if l0 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[0])
+			}
+			l1 := strings.TrimSpace(l[1])
+			if l1 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[1])
+			}
+			l2 := strings.TrimSpace(l[2])
+			if l2 == "" {
+				return nil, fmt.Errorf("empty location specifer: %q", l[2])
+			}
+			locs = append(locs, xds.Locality{Region: l0, Zone: l1, SubZone: l2})
 			continue
 		}
 
