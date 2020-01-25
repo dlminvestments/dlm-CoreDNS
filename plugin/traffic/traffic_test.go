@@ -161,12 +161,9 @@ func TestTrafficLocality(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla     *xdspb.ClusterLoadAssignment
-		cluster string
-		loc     xds.Locality // where we run
-		qtype   uint16
-		rcode   int
-		answer  int // number of records in answer section
+		cla    *xdspb.ClusterLoadAssignment
+		loc    xds.Locality // where we run
+		answer string
 	}{
 		{
 			cla: &xdspb.ClusterLoadAssignment{
@@ -177,13 +174,12 @@ func TestTrafficLocality(t *testing.T) {
 						{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY}},
 						xds.Locality{Region: "us"}),
 					endpointsWithLocality([]EndpointHealth{
-						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY},
-						{"127.0.1.2", 18008, corepb.HealthStatus_HEALTHY}},
+						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY}},
 						xds.Locality{Region: "eu"})...,
 				),
 			},
-			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: 2,
-			loc: xds.Locality{Region: "eu"}, // our location
+			answer: "127.0.1.1",
+			loc:    xds.Locality{Region: "eu"}, // our location
 		},
 	}
 
@@ -191,23 +187,18 @@ func TestTrafficLocality(t *testing.T) {
 
 	for i, tc := range tests {
 		a := xds.NewAssignment()
-		a.SetClusterLoadAssignment("web", tc.cla) // web is our cluster
+		a.SetClusterLoadAssignment("web", tc.cla)
 		c.SetAssignments(a)
 
-		m := new(dns.Msg)
-		cl := dnsutil.Join(tc.cluster, tr.origins[0])
-		m.SetQuestion(cl, tc.qtype)
+		m := new(dns.Msg).SetQuestion(dnsutil.Join("web", tr.origins[0]), dns.TypeA)
 
 		rec := dnstest.NewRecorder(&test.ResponseWriter{})
 		_, err := tr.ServeDNS(ctx, rec, m)
 		if err != nil {
 			t.Errorf("Test %d: Expected no error, but got %q", i, err)
 		}
-		if rec.Msg.Rcode != tc.rcode {
-			t.Errorf("Test %d: Expected no rcode %d, but got %d", i, tc.rcode, rec.Msg.Rcode)
-		}
-		if tc.answer != len(rec.Msg.Answer) {
-			t.Fatalf("Test %d: Expected %d answers, but got %d", i, tc.answer, len(rec.Msg.Answer))
+		if x := rec.Msg.Answer[0].(*dns.A).A.String(); x != tc.answer {
+			t.Fatalf("Test %d: Expected %s, but got %s", i, tc.answer, x)
 		}
 	}
 }
