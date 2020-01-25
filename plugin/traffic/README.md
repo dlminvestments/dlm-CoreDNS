@@ -6,23 +6,24 @@
 
 ## Description
 
-The *traffic* plugin is a balancer that allows traffic steering, weighted responses
-and draining of clusters. The cluster information is retrieved from a service
-discovery manager that implements the service discovery protocols from Envoy
-[implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol). It connects to the
-manager using the Aggregated Discovery Service (ADS) protocol.
+The *traffic* plugin is a balancer that allows traffic steering, weighted responses and draining of
+clusters.
 
-A Cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy connects to."
+The cluster information is retrieved from a service discovery manager that implements the service
+discovery [protocols from Envoy implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol).
+It connects to the manager using the Aggregated Discovery Service (ADS) protocol. Endpoints and
+clusters are discovered every 10 seconds. The plugin hands out responses that adhere to these
+assignments. Only endpoints that are *healthy* are handed out.
+
+If *traffic*'s `locality` has been set the answers can be localized.
+
+A cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy connects to."
 Each cluster has a name, which *traffic* extends to be a domain name. See "Naming Clusters" below.
 
 The use case for this plugin is when a cluster has endpoints running in multiple (Kubernetes?)
 clusters and you need to steer traffic to (or away) from these endpoints, i.e. endpoint A needs to
 be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to upgraded, and *all*
 endpoints need to be drained from it.
-
-*Traffic* discovers the endpoints via Envoy's xDS protocol (using ADS). Endpoints and clusters are
-discovered every 10 seconds. The plugin hands out responses that adhere to these assignments. Only
-endpoints that are *healthy* are handed out.
 
 For A and AAAA queries each DNS response contains a single IP address that's considered the best
 one. The TTL on these answer is set to 5s. It will only return successful responses either with an
@@ -34,7 +35,7 @@ enough to select the best one. When SRV records are returned, the endpoint DNS n
 `endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these synthesized names
 works as well.
 
-Load reporting is not supported for the following reason. A DNS query is done by a resolver.
+Load reporting is not supported for the following reason: A DNS query is done by a resolver.
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
 responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
