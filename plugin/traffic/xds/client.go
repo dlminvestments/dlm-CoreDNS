@@ -30,9 +30,10 @@ import (
 	"github.com/coredns/coredns/coremain"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
 
-	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	adsgrpc "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
+	clusterpb "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	xdspb "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	"github.com/golang/protobuf/ptypes"
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"google.golang.org/grpc"
@@ -45,7 +46,7 @@ const (
 	edsURL = "type.googleapis.com/envoy.api.v2.ClusterLoadAssignment"
 )
 
-type adsStream adsgrpc.AggregatedDiscoveryService_StreamAggregatedResourcesClient
+type adsStream xdspb.AggregatedDiscoveryService_StreamAggregatedResourcesClient
 
 // Client talks to the grpc manager's endpoint to get load assignments.
 type Client struct {
@@ -72,15 +73,13 @@ func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 	c := &Client{cc: cc, to: addr, node: &corepb.Node{Id: node,
 		Metadata: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"HOSTNAME": {
-					Kind: &structpb.Value_StringValue{StringValue: hostname},
-				},
+				"HOSTNAME":     {Kind: &structpb.Value_StringValue{StringValue: hostname}},
+				"BUILDVERSION": {Kind: &structpb.Value_StringValue{StringValue: coremain.CoreVersion}},
 			},
 		},
-		BuildVersion: coremain.CoreVersion,
 	},
 	}
-	c.assignments = &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+	c.assignments = &assignment{cla: make(map[string]*endpointpb.ClusterLoadAssignment)}
 	c.version, c.nonce = make(map[string]string), make(map[string]string)
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 
@@ -100,7 +99,7 @@ func (c *Client) Run() {
 		default:
 		}
 
-		cli := adsgrpc.NewAggregatedDiscoveryServiceClient(c.cc)
+		cli := xdspb.NewAggregatedDiscoveryServiceClient(c.cc)
 		stream, err := cli.StreamAggregatedResources(c.ctx)
 		if err != nil {
 			log.Debug(err)
@@ -183,7 +182,7 @@ func (c *Client) receive(stream adsStream) error {
 					log.Debugf("Failed to unmarshal cluster discovery: %s", err)
 					continue
 				}
-				cluster, ok := any.Message.(*xdspb.Cluster)
+				cluster, ok := any.Message.(*clusterpb.Cluster)
 				if !ok {
 					continue
 				}
@@ -208,7 +207,7 @@ func (c *Client) receive(stream adsStream) error {
 					log.Debugf("Failed to unmarshal endpoint discovery: %s", err)
 					continue
 				}
-				cla, ok := any.Message.(*xdspb.ClusterLoadAssignment)
+				cla, ok := any.Message.(*endpointpb.ClusterLoadAssignment)
 				if !ok {
 					continue
 				}

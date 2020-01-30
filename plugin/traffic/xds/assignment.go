@@ -5,8 +5,8 @@ import (
 	"net"
 	"sync"
 
-	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 )
 
 // SocketAddress holds a corepb.SocketAddress.
@@ -22,16 +22,16 @@ func (s *SocketAddress) Port() uint16 { return uint16(s.GetPortValue()) }
 
 type assignment struct {
 	mu  sync.RWMutex
-	cla map[string]*xdspb.ClusterLoadAssignment
+	cla map[string]*endpointpb.ClusterLoadAssignment
 }
 
 // NewAssignment returns a pointer to an assignment.
 func NewAssignment() *assignment {
-	return &assignment{cla: make(map[string]*xdspb.ClusterLoadAssignment)}
+	return &assignment{cla: make(map[string]*endpointpb.ClusterLoadAssignment)}
 }
 
 // SetClusterLoadAssignment sets the assignment for the cluster to cla.
-func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.ClusterLoadAssignment) {
+func (a *assignment) SetClusterLoadAssignment(cluster string, cla *endpointpb.ClusterLoadAssignment) {
 	// If cla is nil we just found a cluster, check if we already know about it, or if we need to make a new entry.
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -48,7 +48,7 @@ func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb.Cluster
 }
 
 // ClusterLoadAssignment returns the assignment for the cluster or nil if there is none.
-func (a *assignment) ClusterLoadAssignment(cluster string) *xdspb.ClusterLoadAssignment {
+func (a *assignment) ClusterLoadAssignment(cluster string) *endpointpb.ClusterLoadAssignment {
 	a.mu.RLock()
 	cla, ok := a.cla[cluster]
 	a.mu.RUnlock()

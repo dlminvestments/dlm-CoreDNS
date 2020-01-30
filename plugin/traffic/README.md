@@ -41,6 +41,8 @@ responding server (CoreDNS) has no idea how many clients use this resolver. So r
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
 the load reporting from *traffic* highly inaccurate.
 
+*Traffic* implements version 3 of the xDS API.
+
 ## Syntax
 
 ~~~
@@ -154,16 +156,6 @@ lb.example.org {
 
 This will load balance any names under `lb.example.org` using the data from the manager running on
 localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
-
-## Also See
-
-The following documents provide some background on Envoy's control plane.
-
- *  <https://github.com/envoyproxy/go-control-plane>
-
- *  <https://blog.christianposta.com/envoy/guidance-for-building-a-control-plane-to-manage-envoy-proxy-based-infrastructure/>
-
- *  <https://github.com/envoyproxy/envoy/blob/442f9fcf21a5f091cec3fe9913ff309e02288659/api/envoy/api/v2/discovery.proto#L63>
 
 ## Bugs
 
