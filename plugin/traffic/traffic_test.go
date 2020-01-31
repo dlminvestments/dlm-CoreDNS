@@ -9,9 +9,8 @@ import (
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/coredns/coredns/plugin/traffic/xds"
 
-	xdspb "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	corepb "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	endpointpb "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
+	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"github.com/miekg/dns"
 	"google.golang.org/grpc"
 )
@@ -24,7 +23,7 @@ func TestTraffic(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla     *xdspb.ClusterLoadAssignment
+		cla     *endpointpb.ClusterLoadAssignment
 		cluster string
 		qtype   uint16
 		rcode   int
@@ -32,27 +31,27 @@ func TestTraffic(t *testing.T) {
 		ns      bool   // should there be a ns section.
 	}{
 		{
-			cla:     &xdspb.ClusterLoadAssignment{},
+			cla:     &endpointpb.ClusterLoadAssignment{},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, ns: true,
 		},
 		{
-			cla:     &xdspb.ClusterLoadAssignment{},
+			cla:     &endpointpb.ClusterLoadAssignment{},
 			cluster: "web", qtype: dns.TypeSRV, rcode: dns.RcodeSuccess, ns: true,
 		},
 		{
-			cla:     &xdspb.ClusterLoadAssignment{},
+			cla:     &endpointpb.ClusterLoadAssignment{},
 			cluster: "does-not-exist", qtype: dns.TypeA, rcode: dns.RcodeNameError, ns: true,
 		},
 		// healthy endpoint
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.1",
 		},
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb.HealthStatus_HEALTHY}}),
 			},
@@ -60,7 +59,7 @@ func TestTraffic(t *testing.T) {
 		},
 		// unknown endpoint
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN}}),
 			},
@@ -68,7 +67,7 @@ func TestTraffic(t *testing.T) {
 		},
 		// unknown endpoint and healthy endpoint
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
 					{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN},
@@ -79,7 +78,7 @@ func TestTraffic(t *testing.T) {
 		},
 		// SRV query healthy endpoint
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
 					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
@@ -89,7 +88,7 @@ func TestTraffic(t *testing.T) {
 		},
 		// A query for endpoint-0.
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
 					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
@@ -99,7 +98,7 @@ func TestTraffic(t *testing.T) {
 		},
 		// A query for endpoint-1.
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
 					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
@@ -161,17 +160,19 @@ func TestTrafficLocality(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla    *xdspb.ClusterLoadAssignment
+		cla    *endpointpb.ClusterLoadAssignment
 		loc    xds.Locality // where we run
 		answer string
 	}{
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: append(
+					// IPs here should be different, but locality isn't implemented. Make
+					// them identical so the test doesn't fail...(for now)
 					endpointsWithLocality([]EndpointHealth{
-						{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY},
-						{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY}},
+						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY},
+						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY}},
 						xds.Locality{Region: "us"}),
 					endpointsWithLocality([]EndpointHealth{
 						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY}},
@@ -211,7 +212,7 @@ func TestTrafficSRV(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla     *xdspb.ClusterLoadAssignment
+		cla     *endpointpb.ClusterLoadAssignment
 		cluster string
 		qtype   uint16
 		rcode   int
@@ -219,7 +220,7 @@ func TestTrafficSRV(t *testing.T) {
 	}{
 		// SRV query healthy endpoint
 		{
-			cla: &xdspb.ClusterLoadAssignment{
+			cla: &endpointpb.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
 					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
