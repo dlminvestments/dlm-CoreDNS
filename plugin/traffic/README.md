@@ -161,3 +161,7 @@ localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
 
 Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
 is not implemented. Credentials are not implemented.
+
+## TODO
+
+Node may only be set on the first request.
