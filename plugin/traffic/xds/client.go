@@ -189,13 +189,14 @@ func (c *Client) receive(stream adsStream) error {
 				}
 				a.SetClusterLoadAssignment(cluster.GetName(), nil)
 			}
-			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL))
-			ClusterGauge.Set(float64(len(resp.GetResources())))
 			// set our local administration and ack the reply. Empty version would signal NACK.
 			c.SetNonce(cdsURL, resp.GetNonce())
 			c.SetVersion(cdsURL, resp.GetVersionInfo())
 			c.SetAssignments(a)
 			c.clusterDiscovery(stream, resp.GetVersionInfo(), resp.GetNonce(), a.clusters())
+
+			log.Debugf("Cluster discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(cdsURL), c.Nonce(cdsURL))
+			ClusterGauge.Set(float64(len(resp.GetResources())))
 
 			// now kick off discovery for endpoints
 			if err := c.endpointDiscovery(stream, c.Version(edsURL), c.Nonce(edsURL), a.clusters()); err != nil {
@@ -214,10 +215,12 @@ func (c *Client) receive(stream adsStream) error {
 				}
 				c.assignments.SetClusterLoadAssignment(cla.GetClusterName(), cla)
 			}
-			log.Debugf("Endpoint discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(edsURL), c.Nonce(edsURL))
 			// set our local administration and ack the reply. Empty version would signal NACK.
 			c.SetNonce(edsURL, resp.GetNonce())
 			c.SetVersion(edsURL, resp.GetVersionInfo())
+
+			log.Debugf("Endpoint discovery processed with %d resources, version %q and nonce %q", len(resp.GetResources()), c.Version(edsURL), c.Nonce(edsURL))
+			EndpointGauge.Set(float64(len(resp.GetResources())))
 
 		default:
 			return fmt.Errorf("unknown response URL for discovery: %q", resp.GetTypeUrl())

@@ -14,4 +14,10 @@ var (
 		Name:      "clusters_tracked",
 		Help:      "Gauge of tracked clusters.",
 	})
+	EndpointGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: plugin.Namespace,
+		Subsystem: "traffic",
+		Name:      "endpoints_tracked",
+		Help:      "Gauge of all tracked endpoints.",
+	})
 )
