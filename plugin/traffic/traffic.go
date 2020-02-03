@@ -91,6 +91,8 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
 	case dns.TypeSRV:
 		sockaddrs, _ := t.c.All(cluster, t.loc, t.health)
+		m.Answer = make([]dns.RR, 0, len(sockaddrs))
+		m.Extra = make([]dns.RR, 0, len(sockaddrs))
 		for i, sa := range sockaddrs {
 			target := fmt.Sprintf("endpoint-%d.%s.%s", i, cluster, state.Zone)
 
@@ -99,9 +101,9 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				Priority: 100, Weight: 100, Port: sa.Port(), Target: target})
 
 			if sa.Address().To4() == nil {
-				m.Extra = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sa.Address()}}
+				m.Extra = append(m.Extra, &dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sa.Address()})
 			} else {
-				m.Extra = []dns.RR{&dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: sa.Address()}}
+				m.Extra = append(m.Extra, &dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: sa.Address()})
 			}
 		}
 	default:
