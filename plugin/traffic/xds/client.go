@@ -42,8 +42,8 @@ import (
 var log = clog.NewWithPlugin("traffic: xds")
 
 const (
-	cdsURL = "type.googleapis.com/envoy.api.v2.Cluster"
-	edsURL = "type.googleapis.com/envoy.api.v2.ClusterLoadAssignment"
+	cdsURL = "type.googleapis.com/envoy.config.cluster.v3.Cluster"
+	edsURL = "type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment"
 )
 
 type adsStream xdspb.AggregatedDiscoveryService_StreamAggregatedResourcesClient
@@ -74,6 +74,7 @@ func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 		Metadata: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"HOSTNAME":     {Kind: &structpb.Value_StringValue{StringValue: hostname}},
+				"BUILDV":       {Kind: &structpb.Value_StringValue{StringValue: "CoreDNS"}},
 				"BUILDVERSION": {Kind: &structpb.Value_StringValue{StringValue: coremain.CoreVersion}},
 			},
 		},
@@ -165,7 +166,7 @@ func (c *Client) endpointDiscovery(stream adsStream, version, nonce string, clus
 	return stream.Send(req)
 }
 
-// receive receives from the stream, it handled both cluster and endpoint DiscoveryResponses.
+// receive receives from the stream, it handles both cluster and endpoint DiscoveryResponses.
 func (c *Client) receive(stream adsStream) error {
 	for {
 		resp, err := stream.Recv()
