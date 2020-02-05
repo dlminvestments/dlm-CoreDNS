@@ -24,7 +24,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/coredns/coredns/coremain"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
@@ -79,21 +78,19 @@ func New(addr, node string, opts ...grpc.DialOption) (*Client, error) {
 func (c *Client) Stop() error { c.cancel(); return c.cc.Close() }
 
 // Run starts all goroutines and gathers the clusters and endpoint information from the upstream manager.
-func (c *Client) Run() {
+func (c *Client) Run() error {
 	first := true
 	for {
 		select {
 		case <-c.ctx.Done():
-			return
+			return nil
 		default:
 		}
 
 		cli := xdspb.NewAggregatedDiscoveryServiceClient(c.cc)
 		stream, err := cli.StreamAggregatedResources(c.ctx)
 		if err != nil {
-			log.Debug(err)
-			time.Sleep(2 * time.Second) // grpc's client.go does more spiffy exp. backoff, do we really need that?
-			continue
+			return err
 		}
 
 		if first {
@@ -107,7 +104,7 @@ func (c *Client) Run() {
 		}
 
 		if err := c.receive(stream); err != nil {
-			log.Warning(err)
+			return err
 		}
 	}
 }

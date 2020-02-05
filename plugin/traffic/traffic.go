@@ -2,6 +2,7 @@ package traffic
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,7 +18,11 @@ import (
 
 // Traffic is a plugin that load balances according to assignments.
 type Traffic struct {
-	c       *xds.Client
+	c         *xds.Client
+	node      string
+	tlsConfig *tls.Config
+	hosts     []string
+
 	id      string
 	health  bool
 	origins []string

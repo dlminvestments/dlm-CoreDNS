@@ -38,7 +38,26 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		go t.c.Run()
+		go func() {
+			for {
+				opts := []grpc.DialOption{grpc.WithInsecure()}
+				if t.tlsConfig != nil {
+					opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(t.tlsConfig))}
+				}
+
+			redo:
+
+				t.c, err = xds.New(t.hosts[0], t.node, opts...)
+				err := t.c.Run()
+				if err != nil {
+					log.Warning(err)
+					time.Sleep(2 * time.Second) // back off foo
+					goto redo
+				}
+				// err == nil
+				break
+			}
+		}()
 		metrics.MustRegister(c, xds.ClusterGauge)
 		return nil
 	})
@@ -47,9 +66,8 @@ func setup(c *caddy.Controller) error {
 }
 
 func parseTraffic(c *caddy.Controller) (*Traffic, error) {
-	node := "coredns"
 	toHosts := []string{}
-	t := &Traffic{}
+	t := &Traffic{node: "coredns"}
 	var (
 		err           error
 		tlsConfig     *tls.Config
@@ -85,7 +103,7 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 				if len(args) != 1 {
 					return nil, c.ArgErr()
 				}
-				node = args[0]
+				t.node = args[0]
 			case "tls":
 				args := c.RemainingArgs()
 				if len(args) > 3 {
@@ -109,19 +127,13 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 		}
 	}
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
 	if tlsConfig != nil {
+		t.tlsConfig = tlsConfig
 		if tlsServerName != "" {
-			tlsConfig.ServerName = tlsServerName
+			t.tlsConfig.ServerName = tlsServerName
 		}
-		opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}
 	}
-
-	// TODO: only the first host is used, need to figure out how to reconcile multiple upstream providers.
-	if t.c, err = xds.New(toHosts[0], node, opts...); err != nil {
-		return nil, err
-	}
-
+	t.hosts = toHosts
 	return t, nil
 }
 
