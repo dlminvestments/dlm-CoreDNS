@@ -135,8 +135,8 @@ we continue with step 4 above, ignoring any locality.
 
 If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
 
- *  `coredns_traffic_cluster_tracked{}` the number of tracked clusters.
- *  `coredns_traffic_endpoint_tracked{}` the number of tracked clusters.
+ *  `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
+ *  `coredns_traffic_endpoints_tracked{}` the number of tracked clusters.
 
 ## Ready
 
@@ -162,7 +162,3 @@ localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
 
 Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
 is not implemented. Credentials are not implemented.
-
-## TODO
-
-Node may only be set on the first request.
