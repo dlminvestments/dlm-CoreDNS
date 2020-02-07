@@ -41,7 +41,8 @@ responding server (CoreDNS) has no idea how many clients use this resolver. So r
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
 the load reporting from *traffic* highly inaccurate.
 
-*Traffic* implements version 3 of the xDS API.
+*Traffic* implements version 3 of the xDS API. It works with the management server as written in
+<https://github.com/miekg/xds>.
 
 ## Syntax
 
@@ -162,3 +163,8 @@ localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
 
 Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
 is not implemented. Credentials are not implemented.
+
+## Also See
+
+A Envoy management server and command line interface can be found on
+[GitHub](https://github.com/miekg/xds).
