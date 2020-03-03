@@ -35,6 +35,10 @@ enough to select the best one. When SRV records are returned, the endpoint DNS n
 `endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these synthesized names
 works as well.
 
+[gRPC Service Config](https://github.com/grpc/proposal/blob/master/A2-service-configs-in-dns.md),
+when queried for `_grpc_config.<cluster> TXT` such config will be returned. Currently the config
+itself is staticly defined from the properties given in the *traffic* plugin itself.
+
 Load reporting is not supported for the following reason: A DNS query is done by a resolver.
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
 responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
