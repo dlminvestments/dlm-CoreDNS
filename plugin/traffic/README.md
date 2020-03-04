@@ -6,8 +6,15 @@
 
 ## Description
 
-The *traffic* plugin is a balancer that allows traffic steering, weighted responses and draining of
-clusters.
+The *traffic* plugin is a balancer that allows traffic steering, weighted responses and draining
+of clusters. A cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy
+connects to." Each cluster has a name, which *traffic* extends to be a domain name. See "Naming
+Clusters" below.
+
+The use case for this plugin is when a cluster has endpoints running in multiple (Kubernetes?)
+clusters and you need to steer traffic to (or away) from these endpoints, i.e. endpoint A needs to
+be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to upgraded, and *all*
+endpoints need to be drained from it.
 
 The cluster information is retrieved from a service discovery manager that implements the service
 discovery [protocols from Envoy implements](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol).
@@ -15,15 +22,12 @@ It connects to the manager using the Aggregated Discovery Service (ADS) protocol
 clusters are discovered every 10 seconds. The plugin hands out responses that adhere to these
 assignments. Only endpoints that are *healthy* are handed out.
 
-If *traffic*'s `locality` has been set the answers can be localized.
-
-A cluster in Envoy is defined as: "A group of logically similar endpoints that Envoy connects to."
-Each cluster has a name, which *traffic* extends to be a domain name. See "Naming Clusters" below.
-
-The use case for this plugin is when a cluster has endpoints running in multiple (Kubernetes?)
-clusters and you need to steer traffic to (or away) from these endpoints, i.e. endpoint A needs to
-be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to upgraded, and *all*
-endpoints need to be drained from it.
+Note that the manager *itself* is also a cluster that is managed *by the management server*. This is
+the *management cluster* (see `cluster` below in "Syntax"). By default the name for cluster is `xds`.
+When bootstrapping *traffic* tries to retrieve the cluster endpoints for the management cluster.
+This continues in the background and *traffic* is smart enough to reconnect on failures or updates
+cluster configuration. If the `xds` management cluster can't be found on start up, *traffic* returns a
+fatal error.
 
 For A and AAAA queries each DNS response contains a single IP address that's considered the best
 one. The TTL on these answer is set to 5s. It will only return successful responses either with an
@@ -36,14 +40,13 @@ enough to select the best one. When SRV records are returned, the endpoint DNS n
 works as well.
 
 [gRPC LB SRV records](https://github.com/grpc/proposal/blob/master/A5-grpclb-in-dns.md) are
-supported and returned by the *traffic* plugin. These are SRV records for
-`_grpclb._tcp.<name>.<domain>` and point to the xDS management servers as used in the configuration.
-The target name used for these SRV records is `grpclb-<N>.<domain>`. This means a cluster names
-of `grpclb-N` are illegal, because it used by *traffic* itself. See "Naming Clusters" below for
-details.
+supported and returned by the *traffic* plugin for all clusters. The returned endpoints are,
+however, the ones from the management cluster as these must implement gRPC LB.
 
 *Traffic* implements version 3 of the xDS API. It works with the management server as written in
 <https://github.com/miekg/xds>.
+
+If *traffic*'s `locality` has been set the answers can be localized.
 
 ## Syntax
 
@@ -53,13 +56,15 @@ traffic TO...
 
 This enabled the *traffic* plugin, with a default node ID of `coredns` and no TLS.
 
- *  **TO...** are the control plane endpoints to connect to. These must start with `grpc://`. The
-    port number defaults to 443, if not specified.
+ *  **TO...** are the control plane endpoints to bootstrap from. These must start with `grpc://`. The
+    port number defaults to 443, if not specified. These endpoint will be tried in the order given.
+    First successful connection will be used to resolve the management cluster `xds`.
 
 The extended syntax is available if you want more control.
 
 ~~~
 traffic TO... {
+    cluster CLUSTER
     id ID
     locality REGION[,ZONE[,SUBZONE]] [REGION[,ZONE[,SUBZONE]]]...
     tls CERT KEY CA
@@ -67,6 +72,8 @@ traffic TO... {
     ignore_health
 }
 ~~~
+
+ *  `cluster` **CLUSTER** define the name of the management cluster. By default this is `xds`.
 
  *  `id` **ID** is how *traffic* identifies itself to the control plane. This defaults to
     `coredns`.
@@ -105,14 +112,15 @@ traffic TO... {
 When a cluster is named this usually consists out of a single word, i.e. "cluster-v0", or "web".
 The *traffic* plugins uses the name(s) specified in the Server Block to create fully qualified
 domain names. For example if the Server Block specifies `lb.example.org` as one of the names,
-and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to query asking for
+and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to queries asking for
 `cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
 
 For SRV queries all endpoints are returned, the SRV target names are synthesized:
 `endpoint-<N>.web.lb.example.org` to take the example from above. *N* is an integer starting with 0.
 
-gRPC LB integration is also done by returning the correct SRV records. A gRPC client will ask for
-`_grpclb._tcp.web.lb.example.org` and expect to get the SRV (and address records) to tell it where
+For the management cluster `_grpclb._tcp.<cluster>.<name>` will also be resolved in the same way as
+normal SRV queries. This special case is done because gRPC lib
+
 the gRPC LBs are. For each **TO** in the configuration *traffic* will return a SRV record. The
 target name in the SRV are synthesized as well, using `grpclb-N` to prefix the zone from the Corefile,
 i.e. `grpclb-0.lb.example.org` will be the gRPC name when using `lb.example.org` in the configuration.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ import (
 type Traffic struct {
 	c         *xds.Client
 	node      string
+	mgmt      string
 	tlsConfig *tls.Config
 	hosts     []string
 
@@ -28,9 +28,6 @@ type Traffic struct {
 	health  bool
 	origins []string
 	loc     []xds.Locality
-
-	grpcSRV  []dns.RR // SRV records for grpc LB
-	grpcAddr []dns.RR // Address records for each LB (taken from **TOO**)
 
 	Next plugin.Handler
 }
@@ -54,26 +51,51 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 	sockaddr, ok := t.c.Select(cluster, t.loc, t.health)
 	if !ok {
-		// ok the cluster (which has potentially extra labels), doesn't exist, but we may have a query for endpoint-0.<cluster>.
-		// check if we have 2 labels and that the first equals endpoint-0.
-		if dns.CountLabel(cluster) != 2 {
-			m.Ns = soa(state.Zone)
-			m.Rcode = dns.RcodeNameError
-			w.WriteMsg(m)
-			return 0, nil
-		}
+		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
+		// legit is:
+		// endpoint-N.cluster
+		// _grpclb._tcp.cluster
+		// _tcp.cluster
 		labels := dns.SplitDomainName(cluster)
-		if strings.HasPrefix(labels[0], "endpoint-") {
-			// recheck if the cluster exist.
-			cluster = labels[1]
-			sockaddr, ok = t.c.Select(cluster, t.loc, t.health)
-			if !ok {
+		switch len(labels) {
+		case 2:
+			// endpoint or _tcp
+			if strings.ToLower(labels[0]) == "_tcp" {
+				// nodata, because empty non-terminal
+				m.Ns = soa(state.Zone)
+				m.Rcode = dns.RcodeSuccess
+				w.WriteMsg(m)
+				return 0, nil
+			}
+			if strings.HasPrefix(strings.ToLower(labels[0]), "endpoint-") {
+				// recheck if the cluster exist.
+				cluster = labels[1]
+				sockaddr, ok = t.c.Select(cluster, t.loc, t.health)
+				if !ok {
+					m.Ns = soa(state.Zone)
+					m.Rcode = dns.RcodeNameError
+					w.WriteMsg(m)
+					return 0, nil
+				}
+				return t.serveEndpoint(ctx, state, labels[0], cluster)
+			}
+		case 3:
+			if strings.ToLower(labels[0]) != "_grpclb" || strings.ToLower(labels[1]) != "_tcp" {
 				m.Ns = soa(state.Zone)
 				m.Rcode = dns.RcodeNameError
 				w.WriteMsg(m)
 				return 0, nil
 			}
-			return t.serveEndpoint(ctx, state, labels[0], cluster)
+			// OK, _grcplb._tcp query; we need to return the endpoint for the mgmt cluster *NOT* the cluster
+			// we got the query for. This should exist, but we'll check later anyway
+			cluster = t.mgmt
+			sockaddr, _ = t.c.Select(cluster, t.loc, t.health)
+			break
+		default:
+			m.Ns = soa(state.Zone)
+			m.Rcode = dns.RcodeNameError
+			w.WriteMsg(m)
+			return 0, nil
 		}
 	}
 
@@ -192,47 +214,4 @@ func soa(z string) []dns.RR {
 		Expire:  604800,
 		Minttl:  5,
 	}}
-}
-
-// srv record for grpclb endpoint.
-func srv(i int, host, zone string) *dns.SRV {
-	target := fmt.Sprintf("grpclb-%d.%s", i, zone)
-	hdr := dns.RR_Header{Name: dnsutil.Join("_grpclb._tcp", zone), Class: dns.ClassINET, Rrtype: dns.TypeSRV}
-	_, p, _ := net.SplitHostPort(host) // err ignored already checked in setup
-	port, _ := strconv.Atoi(p)
-	return &dns.SRV{
-		Hdr: hdr,
-		// prio, weight -> 0
-		Port:   uint16(port),
-		Target: target,
-	}
-}
-
-func a(i int, host, zone string) *dns.A {
-	owner := fmt.Sprintf("grpclb-%d.%s", i, zone)
-	hdr := dns.RR_Header{Name: owner, Class: dns.ClassINET, Rrtype: dns.TypeA}
-	h, _, _ := net.SplitHostPort(host)
-	ip := net.ParseIP(h)
-	if ip == nil {
-		return nil
-	}
-	if ip.To4() == nil {
-		return nil
-	}
-	return &dns.A{Hdr: hdr, A: ip.To4()}
-}
-
-func aaaa(i int, host, zone string) *dns.AAAA {
-	owner := fmt.Sprintf("grpclb-%d.%s", i, zone)
-	hdr := dns.RR_Header{Name: owner, Class: dns.ClassINET, Rrtype: dns.TypeAAAA}
-	h, _, _ := net.SplitHostPort(host)
-	ip := net.ParseIP(h)
-	if ip == nil {
-		return nil
-	}
-	if ip.To4() != nil {
-		return nil
-	}
-	return &dns.AAAA{Hdr: hdr, AAAA: ip.To16()}
-
 }

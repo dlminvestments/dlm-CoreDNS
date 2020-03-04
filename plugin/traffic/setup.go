@@ -67,7 +67,7 @@ func setup(c *caddy.Controller) error {
 
 func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 	toHosts := []string{}
-	t := &Traffic{node: "coredns"}
+	t := &Traffic{node: "coredns", mgmt: "xds"}
 	var (
 		err           error
 		tlsConfig     *tls.Config
@@ -98,6 +98,12 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 		}
 		for c.NextBlock() {
 			switch c.Val() {
+			case "cluster":
+				args := c.RemainingArgs()
+				if len(args) != 1 {
+					return nil, c.ArgErr()
+				}
+				t.mgmt = args[0]
 			case "id":
 				args := c.RemainingArgs()
 				if len(args) != 1 {

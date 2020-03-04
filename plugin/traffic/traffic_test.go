@@ -256,6 +256,46 @@ func TestTrafficSRV(t *testing.T) {
 	}
 }
 
+func TestTrafficManagement(t *testing.T) {
+	c, err := xds.New("127.0.0.1:0", "test-id", grpc.WithInsecure())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tr := &Traffic{c: c, origins: []string{"lb.example.org."}, mgmt: "xds"}
+
+	for _, cla := range []*endpointpb.ClusterLoadAssignment{
+		&endpointpb.ClusterLoadAssignment{
+			ClusterName: "web",
+			Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY}}),
+		},
+		&endpointpb.ClusterLoadAssignment{
+			ClusterName: "xds",
+			Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb.HealthStatus_HEALTHY}}),
+		},
+	} {
+		a := xds.NewAssignment()
+		a.SetClusterLoadAssignment(cla.ClusterName, cla)
+		c.SetAssignments(a)
+	}
+	ctx := context.TODO()
+
+	// Now we ask for the grpclb endpoint in the web cluster, this should give us the endpoint of the xds (mgmt) cluster.
+	// ; ANSWER SECTION:
+	// _grpclb._tcp.web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-0.xds.lb.example.org.
+	// ;; ADDITIONAL SECTION:
+	// endpoint-0.xds.lb.example.org.	5	IN	AAAA	::1
+
+	m := new(dns.Msg)
+	m.SetQuestion("_grpclb._tcp.web.lb.example.org.", dns.TypeSRV)
+	rec := dnstest.NewRecorder(&test.ResponseWriter{})
+	if _, err := tr.ServeDNS(ctx, rec, m); err != nil {
+		t.Errorf("Expected no error, but got %q", err)
+	}
+	if x := rec.Msg.Answer[0].(*dns.SRV).Target; x != "endpoint-0.xds.lb.example.org." {
+		t.Errorf("Expected %s, got %s", "endpoint-0.xds.lb.example.org.", x)
+	}
+}
+
 type EndpointHealth struct {
 	Address string
 	Port    uint16
