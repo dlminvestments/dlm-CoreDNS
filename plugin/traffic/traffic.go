@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,9 @@ type Traffic struct {
 	health  bool
 	origins []string
 	loc     []xds.Locality
+
+	grpcSRV  []dns.RR // SRV records for grpc LB
+	grpcAddr []dns.RR // Address records for each LB (taken from **TOO**)
 
 	Next plugin.Handler
 }
@@ -173,6 +177,9 @@ func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endp
 	return 0, nil
 }
 
+// Name implements the plugin.Handler interface.
+func (t *Traffic) Name() string { return "traffic" }
+
 // soa returns a synthetic so for this zone.
 func soa(z string) []dns.RR {
 	return []dns.RR{&dns.SOA{
@@ -187,5 +194,45 @@ func soa(z string) []dns.RR {
 	}}
 }
 
-// Name implements the plugin.Handler interface.
-func (t *Traffic) Name() string { return "traffic" }
+// srv record for grpclb endpoint.
+func srv(i int, host, zone string) *dns.SRV {
+	target := fmt.Sprintf("grpclb-%d.%s", i, zone)
+	hdr := dns.RR_Header{Name: dnsutil.Join("_grpclb._tcp", zone), Class: dns.ClassINET, Rrtype: dns.TypeSRV}
+	_, p, _ := net.SplitHostPort(host) // err ignored already checked in setup
+	port, _ := strconv.Atoi(p)
+	return &dns.SRV{
+		Hdr: hdr,
+		// prio, weight -> 0
+		Port:   uint16(port),
+		Target: target,
+	}
+}
+
+func a(i int, host, zone string) *dns.A {
+	owner := fmt.Sprintf("grpclb-%d.%s", i, zone)
+	hdr := dns.RR_Header{Name: owner, Class: dns.ClassINET, Rrtype: dns.TypeA}
+	h, _, _ := net.SplitHostPort(host)
+	ip := net.ParseIP(h)
+	if ip == nil {
+		return nil
+	}
+	if ip.To4() == nil {
+		return nil
+	}
+	return &dns.A{Hdr: hdr, A: ip.To4()}
+}
+
+func aaaa(i int, host, zone string) *dns.AAAA {
+	owner := fmt.Sprintf("grpclb-%d.%s", i, zone)
+	hdr := dns.RR_Header{Name: owner, Class: dns.ClassINET, Rrtype: dns.TypeAAAA}
+	h, _, _ := net.SplitHostPort(host)
+	ip := net.ParseIP(h)
+	if ip == nil {
+		return nil
+	}
+	if ip.To4() != nil {
+		return nil
+	}
+	return &dns.AAAA{Hdr: hdr, AAAA: ip.To16()}
+
+}

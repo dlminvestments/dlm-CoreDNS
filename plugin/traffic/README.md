@@ -35,15 +35,12 @@ enough to select the best one. When SRV records are returned, the endpoint DNS n
 `endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these synthesized names
 works as well.
 
-[gRPC Service Config](https://github.com/grpc/proposal/blob/master/A2-service-configs-in-dns.md),
-when queried for `_grpc_config.<cluster> TXT` such config will be returned. Currently the config
-itself is staticly defined from the properties given in the *traffic* plugin itself.
-
-Load reporting is not supported for the following reason: A DNS query is done by a resolver.
-Behind this resolver (which can also cache) there may be many clients that will use this reply. The
-responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
-+1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
-the load reporting from *traffic* highly inaccurate.
+[gRPC LB SRV records](https://github.com/grpc/proposal/blob/master/A5-grpclb-in-dns.md) are
+supported and returned by the *traffic* plugin. These are SRV records for
+`_grpclb._tcp.<name>.<domain>` and point to the xDS management servers as used in the configuration.
+The target name used for these SRV records is `grpclb-<N>.<domain>`. This means a cluster names
+of `grpclb-N` are illegal, because it used by *traffic* itself. See "Naming Clusters" below for
+details.
 
 *Traffic* implements version 3 of the xDS API. It works with the management server as written in
 <https://github.com/miekg/xds>.
@@ -63,7 +60,7 @@ The extended syntax is available if you want more control.
 
 ~~~
 traffic TO... {
-    node ID
+    id ID
     locality REGION[,ZONE[,SUBZONE]] [REGION[,ZONE[,SUBZONE]]]...
     tls CERT KEY CA
     tls_servername NAME
@@ -71,7 +68,7 @@ traffic TO... {
 }
 ~~~
 
- *  `node` **ID** is how *traffic* identifies itself to the control plane. This defaults to
+ *  `id` **ID** is how *traffic* identifies itself to the control plane. This defaults to
     `coredns`.
 
  *  `locality` has a list of **REGION,ZONE,SUBZONE** sets. These tell *traffic* where its running
@@ -110,6 +107,16 @@ The *traffic* plugins uses the name(s) specified in the Server Block to create f
 domain names. For example if the Server Block specifies `lb.example.org` as one of the names,
 and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to query asking for
 `cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
+
+For SRV queries all endpoints are returned, the SRV target names are synthesized:
+`endpoint-<N>.web.lb.example.org` to take the example from above. *N* is an integer starting with 0.
+
+gRPC LB integration is also done by returning the correct SRV records. A gRPC client will ask for
+`_grpclb._tcp.web.lb.example.org` and expect to get the SRV (and address records) to tell it where
+the gRPC LBs are. For each **TO** in the configuration *traffic* will return a SRV record. The
+target name in the SRV are synthesized as well, using `grpclb-N` to prefix the zone from the Corefile,
+i.e. `grpclb-0.lb.example.org` will be the gRPC name when using `lb.example.org` in the configuration.
+Each `grpclb-N` target will have one address record, namely the one specified in the configuration.
 
 ## Localized Endpoints
 
@@ -153,7 +160,7 @@ established to the control plane.
 ~~~
 lb.example.org {
     traffic grpc://127.0.0.1:18000 {
-        node test-id
+        id test-id
     }
     debug
     log
@@ -161,12 +168,34 @@ lb.example.org {
 ~~~
 
 This will load balance any names under `lb.example.org` using the data from the manager running on
-localhost on port 18000. The node ID will be `test-id` and no TLS will be used.
+localhost on port 18000. The node ID will be `test-id` and no TLS will be used. Assuming a
+management server returns config for `web` cluster, you can query CoreDNS for it, below we do an
+address lookup, which returns an address for the endpoint. The second example shows a SRV lookup
+which returns all endpoints.
+
+~~~ sh
+$ dig @localhost web.lb.example.org +noall +answer
+web.lb.example.org.	5	IN	A	127.0.1.1
+$ dig @localhost web.lb.example.org SRV +noall +answer +additional
+web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-0.web.lb.example.org.
+web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-1.web.lb.example.org.
+web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-2.web.lb.example.org.
+endpoint-0.web.lb.example.org. 5 IN	A	127.0.1.1
+endpoint-1.web.lb.example.org. 5 IN	A	127.0.1.2
+endpoint-2.web.lb.example.org. 5 IN	A	127.0.2.1
+~~~
 
 ## Bugs
 
 Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
 is not implemented. Credentials are not implemented.
+
+Load reporting is not supported for the following reason: A DNS query is done by a resolver.
+Behind this resolver (which can also cache) there may be many clients that will use this reply. The
+responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
++1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
+the load reporting from *traffic* highly inaccurate.
+
 
 ## Also See
 
