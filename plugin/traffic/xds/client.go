@@ -96,7 +96,7 @@ func (c *Client) Run() error {
 		if first {
 			// send first request, to create stream, then wait for ADS to send us updates.
 			if err := c.clusterDiscovery(stream, c.Version(cdsURL), c.Nonce(cdsURL), []string{}); err != nil {
-				log.Debug(err)
+				return err
 			}
 			log.Infof("gRPC stream established to %q", c.to) // might fail??
 			c.setSynced()

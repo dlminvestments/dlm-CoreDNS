@@ -179,24 +179,36 @@ This will load balance any names under `lb.example.org` using the data from the 
 localhost on port 18000. The node ID will be `test-id` and no TLS will be used. Assuming a
 management server returns config for `web` cluster, you can query CoreDNS for it, below we do an
 address lookup, which returns an address for the endpoint. The second example shows a SRV lookup
-which returns all endpoints.
+which returns all endpoints. The third shows what gRPC will ask for when looking for load balancers.
 
 ~~~ sh
-$ dig @localhost web.lb.example.org +noall +answer
+$ dig web.lb.example.org +noall +answer
 web.lb.example.org.	5	IN	A	127.0.1.1
-$ dig @localhost web.lb.example.org SRV +noall +answer +additional
+
+$ dig web.lb.example.org SRV +noall +answer +additional
 web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-0.web.lb.example.org.
 web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-1.web.lb.example.org.
 web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-2.web.lb.example.org.
+
 endpoint-0.web.lb.example.org. 5 IN	A	127.0.1.1
 endpoint-1.web.lb.example.org. 5 IN	A	127.0.1.2
 endpoint-2.web.lb.example.org. 5 IN	A	127.0.2.1
+
+$ dig _grpclb._tcp.web.lb.example.org SRV +noall +answer +additional
+
+_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-0.xds.lb.example.org.
+_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-1.xds.lb.example.org.
+_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-2.xds.lb.example.org.
+
+endpoint-0.xds.lb.example.org. 5 IN	A	10.0.1.1
+endpoint-1.xds.lb.example.org. 5 IN	A	10.0.1.2
+endpoint-2.xds.lb.example.org. 5 IN	A	10.0.2.1
 ~~~
 
 ## Bugs
 
-Priority and locality information from ClusterLoadAssignments is not used. Multiple **TO** addresses
-is not implemented. Credentials are not implemented.
+Priority and locality information from ClusterLoadAssignments is not used. Credentials are not
+implemented.
 
 Load reporting is not supported for the following reason: A DNS query is done by a resolver.
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
@@ -204,6 +216,8 @@ responding server (CoreDNS) has no idea how many clients use this resolver. So r
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
 the load reporting from *traffic* highly inaccurate.
 
+Bootstrapping is not fully implemented, *traffic* will connect to the first working **TO** addresss,
+but then stops short of re-connecting to he endpoints is received for the management **CLUSTER**.
 
 ## Also See
 

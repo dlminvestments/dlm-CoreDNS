@@ -45,16 +45,23 @@ func setup(c *caddy.Controller) error {
 					opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(t.tlsConfig))}
 				}
 
+				i := 0
 			redo:
-
-				t.c, err = xds.New(t.hosts[0], t.node, opts...)
-				err := t.c.Run()
-				if err != nil {
+				i = i % len(t.hosts)
+				if t.c, err = xds.New(t.hosts[i], t.node, opts...); err != nil {
 					log.Warning(err)
 					time.Sleep(2 * time.Second) // back off foo
+					i++
 					goto redo
 				}
-				// err == nil
+
+				if err := t.c.Run(); err != nil {
+					log.Warning(err)
+					time.Sleep(2 * time.Second) // back off foo
+					i++
+					goto redo
+				}
+				// err == nil, we are connected
 				break
 			}
 		}()
