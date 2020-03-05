@@ -156,7 +156,7 @@ we continue with step 4 above, ignoring any locality.
 If monitoring is enabled (via the *prometheus* plugin) then the following metric are exported:
 
  *  `coredns_traffic_clusters_tracked{}` the number of tracked clusters.
- *  `coredns_traffic_endpoints_tracked{}` the number of tracked clusters.
+ *  `coredns_traffic_endpoints_tracked{}` the number of tracked endpoints.
 
 ## Ready
 
