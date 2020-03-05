@@ -71,20 +71,20 @@ func (a *assignment) clusters() []string {
 }
 
 // Select selects a endpoint from cluster load assignments, using weighted random selection. It only selects endpoints that are reporting healthy.
-func (a *assignment) Select(cluster string, locality []Locality, ignore bool) (*SocketAddress, bool) {
+func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
 	}
 
-	total := 0
+	weight := 0
 	healthy := 0
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
 			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
-			total += int(lb.GetLoadBalancingWeight().GetValue())
+			weight += int(lb.GetLoadBalancingWeight().GetValue())
 			healthy++
 		}
 	}
@@ -92,8 +92,8 @@ func (a *assignment) Select(cluster string, locality []Locality, ignore bool) (*
 		return nil, true
 	}
 
-	if total == 0 {
-		// all weights are 0, randomly select one of the endpoints.
+	// all weights are 0, randomly select one of the endpoints,
+	if weight == 0 {
 		r := rand.Intn(healthy)
 		i := 0
 		for _, ep := range cla.Endpoints {
@@ -110,7 +110,7 @@ func (a *assignment) Select(cluster string, locality []Locality, ignore bool) (*
 		return nil, true
 	}
 
-	r := rand.Intn(total) + 1
+	r := rand.Intn(healthy) + 1
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
 			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
@@ -126,7 +126,7 @@ func (a *assignment) Select(cluster string, locality []Locality, ignore bool) (*
 }
 
 // All returns all healthy endpoints.
-func (a *assignment) All(cluster string, locality []Locality, ignore bool) ([]*SocketAddress, bool) {
+func (a *assignment) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false

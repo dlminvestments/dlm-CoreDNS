@@ -199,22 +199,23 @@ func (c *Client) receive(stream adsStream) error {
 
 // Select returns an address that is deemed to be the correct one for this cluster. The returned
 // boolean indicates if the cluster exists.
-func (c *Client) Select(cluster string, locality []Locality, ignore bool) (*SocketAddress, bool) {
+func (c *Client) Select(cluster string, ignore bool) (*SocketAddress, bool) {
 	if cluster == "" {
 		return nil, false
 	}
-	return c.assignments.Select(cluster, locality, ignore)
+	return c.assignments.Select(cluster, ignore)
 }
 
 // All returns all endpoints.
-func (c *Client) All(cluster string, locality []Locality, ignore bool) ([]*SocketAddress, bool) {
+func (c *Client) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
 	if cluster == "" {
 		return nil, false
 	}
-	return c.assignments.All(cluster, locality, ignore)
+	return c.assignments.All(cluster, ignore)
 }
 
 // Locality holds the locality for this server. It contains a Region, Zone and SubZone.
+// Currently this is not used.
 type Locality struct {
 	Region  string
 	Zone    string

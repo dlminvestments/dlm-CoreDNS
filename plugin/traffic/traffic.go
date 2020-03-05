@@ -27,7 +27,6 @@ type Traffic struct {
 	id      string
 	health  bool
 	origins []string
-	loc     []xds.Locality
 
 	Next plugin.Handler
 }
@@ -49,7 +48,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 	m.Authoritative = true
 
-	sockaddr, ok := t.c.Select(cluster, t.loc, t.health)
+	sockaddr, ok := t.c.Select(cluster, t.health)
 	if !ok {
 		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
 		// legit is:
@@ -70,7 +69,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			if strings.HasPrefix(strings.ToLower(labels[0]), "endpoint-") {
 				// recheck if the cluster exist.
 				cluster = labels[1]
-				sockaddr, ok = t.c.Select(cluster, t.loc, t.health)
+				sockaddr, ok = t.c.Select(cluster, t.health)
 				if !ok {
 					m.Ns = soa(state.Zone)
 					m.Rcode = dns.RcodeNameError
@@ -87,9 +86,9 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				return 0, nil
 			}
 			// OK, _grcplb._tcp query; we need to return the endpoint for the mgmt cluster *NOT* the cluster
-			// we got the query for. This should exist, but we'll check later anyway
+			// we got the query for. This should exist, but we'll check later anyway.
 			cluster = t.mgmt
-			sockaddr, _ = t.c.Select(cluster, t.loc, t.health)
+			sockaddr, _ = t.c.Select(cluster, t.health)
 			break
 		default:
 			m.Ns = soa(state.Zone)
@@ -121,7 +120,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		}
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
 	case dns.TypeSRV:
-		sockaddrs, _ := t.c.All(cluster, t.loc, t.health)
+		sockaddrs, _ := t.c.All(cluster, t.health)
 		m.Answer = make([]dns.RR, 0, len(sockaddrs))
 		m.Extra = make([]dns.RR, 0, len(sockaddrs))
 		for i, sa := range sockaddrs {
@@ -168,7 +167,7 @@ func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endp
 		return 0, nil
 	}
 
-	sockaddrs, _ := t.c.All(cluster, t.loc, t.health)
+	sockaddrs, _ := t.c.All(cluster, t.health)
 	if len(sockaddrs) < nr {
 		m.Ns = soa(state.Zone)
 		m.Rcode = dns.RcodeNameError

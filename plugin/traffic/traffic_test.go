@@ -152,58 +152,6 @@ func TestTraffic(t *testing.T) {
 	}
 }
 
-func TestTrafficLocality(t *testing.T) {
-	c, err := xds.New("127.0.0.1:0", "test-id", grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
-
-	tests := []struct {
-		cla    *endpointpb.ClusterLoadAssignment
-		loc    xds.Locality // where we run
-		answer string
-	}{
-		{
-			cla: &endpointpb.ClusterLoadAssignment{
-				ClusterName: "web",
-				Endpoints: append(
-					// IPs here should be different, but locality isn't implemented. Make
-					// them identical so the test doesn't fail...(for now)
-					endpointsWithLocality([]EndpointHealth{
-						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY},
-						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY}},
-						xds.Locality{Region: "us"}),
-					endpointsWithLocality([]EndpointHealth{
-						{"127.0.1.1", 18008, corepb.HealthStatus_HEALTHY}},
-						xds.Locality{Region: "eu"})...,
-				),
-			},
-			answer: "127.0.1.1",
-			loc:    xds.Locality{Region: "eu"}, // our location
-		},
-	}
-
-	ctx := context.TODO()
-
-	for i, tc := range tests {
-		a := xds.NewAssignment()
-		a.SetClusterLoadAssignment("web", tc.cla)
-		c.SetAssignments(a)
-
-		m := new(dns.Msg).SetQuestion(dnsutil.Join("web", tr.origins[0]), dns.TypeA)
-
-		rec := dnstest.NewRecorder(&test.ResponseWriter{})
-		_, err := tr.ServeDNS(ctx, rec, m)
-		if err != nil {
-			t.Errorf("Test %d: Expected no error, but got %q", i, err)
-		}
-		if x := rec.Msg.Answer[0].(*dns.A).A.String(); x != tc.answer {
-			t.Fatalf("Test %d: Expected %s, but got %s", i, tc.answer, x)
-		}
-	}
-}
-
 func TestTrafficSRV(t *testing.T) {
 	c, err := xds.New("127.0.0.1:0", "test-id", grpc.WithInsecure())
 	if err != nil {
@@ -290,6 +238,9 @@ func TestTrafficManagement(t *testing.T) {
 	rec := dnstest.NewRecorder(&test.ResponseWriter{})
 	if _, err := tr.ServeDNS(ctx, rec, m); err != nil {
 		t.Errorf("Expected no error, but got %q", err)
+	}
+	if len(rec.Msg.Answer) == 0 {
+		t.Fatalf("Expected answer section, got none")
 	}
 	if x := rec.Msg.Answer[0].(*dns.SRV).Target; x != "endpoint-0.xds.lb.example.org." {
 		t.Errorf("Expected %s, got %s", "endpoint-0.xds.lb.example.org.", x)

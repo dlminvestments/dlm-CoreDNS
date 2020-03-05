@@ -18,6 +18,6 @@ var (
 		Namespace: plugin.Namespace,
 		Subsystem: "traffic",
 		Name:      "endpoints_tracked",
-		Help:      "Gauge of all tracked endpoints.",
+		Help:      "Gauge of tracked endpoints.",
 	})
 )
