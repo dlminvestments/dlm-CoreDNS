@@ -76,6 +76,16 @@ func TestTraffic(t *testing.T) {
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
 		},
+		// unknown endpoint and healthy endpoint, TXT query
+		{
+			cla: &endpointpb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints: endpoints([]EndpointHealth{
+					{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN},
+				}),
+			},
+			cluster: "web", qtype: dns.TypeTXT, rcode: dns.RcodeSuccess, answer: "endpoint-0.web.lb.example.org.",
+		},
 		// SRV query healthy endpoint
 		{
 			cla: &endpointpb.ClusterLoadAssignment{
@@ -144,6 +154,8 @@ func TestTraffic(t *testing.T) {
 				addr = x.AAAA.String()
 			case *dns.SRV:
 				addr = x.Target
+			case *dns.TXT:
+				addr = x.Txt[3]
 			}
 			if tc.answer != addr {
 				t.Errorf("Test %d: Expected answer %s, but got %s", i, tc.answer, addr)

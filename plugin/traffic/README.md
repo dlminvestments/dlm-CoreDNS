@@ -27,12 +27,20 @@ the *management cluster* (see `cluster` below in "Syntax"). By default the name 
 When bootstrapping *traffic* tries to retrieve the cluster endpoints for the management cluster,
 when the cluster is not found *traffic* will return a fatal error.
 
-The *traffic* plugin handles A, AAAA and SRV queries. Queries for non-existent clusters get a
-NXDOMAIN, where the minimal TTL is also set to 5s.
+The *traffic* plugin handles A, AAAA, SRV and TXT queries. TXT queries are purely used for debugging
+as health status of the endpoints is ignored in that case.
+Queries for non-existent clusters get a NXDOMAIN, where the minimal TTL is also set to 5s.
 
 For A and AAAA queries each DNS response contains a single IP address that's considered the best
 one. The TTL on these answer is set to 5s. It will only return successful responses either with an
 answer or, otherwise, a NODATA response.
+
+TXT replies will use the SRV record format augmented with the health status of each backend, as this
+is useful for debugging.
+
+~~~
+web.lb.example.org.	5	IN	TXT	"100" "100" "18008" "endpoint-0.web.lb.example.org." "HEALTHY"
+~~~
 
 For SRV queries *all* healthy backends will be returned - assuming the client doing the query
 is smart enough to select the best one. When SRV records are returned, the endpoint DNS names
@@ -55,8 +63,7 @@ traffic TO...
 This enabled the *traffic* plugin, with a default node ID of `coredns` and no TLS.
 
  *  **TO...** are the control plane endpoints to bootstrap from. These must start with `grpc://`. The
-    port number defaults to 443, if not specified. These endpoint will be tried in the order given.
-    First successful connection will be used to resolve the management cluster `xds`.
+    port number defaults to 443, if not specified. These endpoints will be tried in the order given.
 
 The extended syntax is available if you want more control.
 
@@ -66,7 +73,6 @@ traffic TO... {
     id ID
     tls CERT KEY CA
     tls_servername NAME
-    ignore_health
 }
 ~~~
 
@@ -92,8 +98,6 @@ traffic TO... {
 
  *  `tls_servername` **NAME** allows you to set a server name in the TLS configuration. This is
     needed because *traffic* connects to an IP address, so it can't infer the server name from it.
-
- *  `ignore_health` can be enabled to ignore endpoint health status, this can aid in debugging.
 
 ## Naming Clusters
 

@@ -13,6 +13,7 @@ import (
 	"github.com/coredns/coredns/plugin/traffic/xds"
 	"github.com/coredns/coredns/request"
 
+	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	"github.com/miekg/dns"
 )
 
@@ -25,7 +26,6 @@ type Traffic struct {
 	hosts     []string
 
 	id      string
-	health  bool
 	origins []string
 
 	Next plugin.Handler
@@ -48,7 +48,8 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 	m.Authoritative = true
 
-	sockaddr, ok := t.c.Select(cluster, t.health)
+	healthy := state.QType() == dns.TypeTXT
+	sockaddr, ok := t.c.Select(cluster, healthy)
 	if !ok {
 		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
 		// legit is:
@@ -69,14 +70,14 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			if strings.HasPrefix(strings.ToLower(labels[0]), "endpoint-") {
 				// recheck if the cluster exist.
 				cluster = labels[1]
-				sockaddr, ok = t.c.Select(cluster, t.health)
+				sockaddr, ok = t.c.Select(cluster, healthy)
 				if !ok {
 					m.Ns = soa(state.Zone)
 					m.Rcode = dns.RcodeNameError
 					w.WriteMsg(m)
 					return 0, nil
 				}
-				return t.serveEndpoint(ctx, state, labels[0], cluster)
+				return t.serveEndpoint(ctx, state, labels[0], cluster, healthy)
 			}
 		case 3:
 			if strings.ToLower(labels[0]) != "_grpclb" || strings.ToLower(labels[1]) != "_tcp" {
@@ -88,7 +89,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			// OK, _grcplb._tcp query; we need to return the endpoint for the mgmt cluster *NOT* the cluster
 			// we got the query for. This should exist, but we'll check later anyway.
 			cluster = t.mgmt
-			sockaddr, _ = t.c.Select(cluster, t.health)
+			sockaddr, _ = t.c.Select(cluster, healthy)
 			break
 		default:
 			m.Ns = soa(state.Zone)
@@ -120,7 +121,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		}
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
 	case dns.TypeSRV:
-		sockaddrs, _ := t.c.All(cluster, t.health)
+		sockaddrs, _ := t.c.All(cluster, true)
 		m.Answer = make([]dns.RR, 0, len(sockaddrs))
 		m.Extra = make([]dns.RR, 0, len(sockaddrs))
 		for i, sa := range sockaddrs {
@@ -136,6 +137,18 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				m.Extra = append(m.Extra, &dns.A{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 5}, A: sa.Address()})
 			}
 		}
+	case dns.TypeTXT:
+		sockaddrs, _ := t.c.All(cluster, false)
+		m.Answer = make([]dns.RR, 0, len(sockaddrs))
+		m.Extra = make([]dns.RR, 0, len(sockaddrs))
+		for i, sa := range sockaddrs {
+			target := fmt.Sprintf("endpoint-%d.%s.%s", i, cluster, state.Zone)
+
+			m.Answer = append(m.Answer, &dns.TXT{
+				Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5},
+				Txt: []string{"100", "100", strconv.Itoa(int(sa.Port())), target, corepb.HealthStatus_name[int32(sa.Health)]}})
+			m.Extra = append(m.Extra, &dns.TXT{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5}, Txt: []string{sa.Address().String()}})
+		}
 	default:
 		m.Ns = soa(state.Zone)
 	}
@@ -144,7 +157,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	return 0, nil
 }
 
-func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endpoint, cluster string) (int, error) {
+func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endpoint, cluster string, healthy bool) (int, error) {
 	m := new(dns.Msg)
 	m.SetReply(state.Req)
 	m.Authoritative = true
@@ -167,7 +180,7 @@ func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endp
 		return 0, nil
 	}
 
-	sockaddrs, _ := t.c.All(cluster, t.health)
+	sockaddrs, _ := t.c.All(cluster, healthy)
 	if len(sockaddrs) < nr {
 		m.Ns = soa(state.Zone)
 		m.Rcode = dns.RcodeNameError

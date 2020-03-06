@@ -61,8 +61,6 @@ func setup(c *caddy.Controller) error {
 					i++
 					goto redo
 				}
-				// err == nil, we are connected
-				break
 			}
 		}()
 		metrics.MustRegister(c, xds.ClusterGauge)
@@ -132,8 +130,6 @@ func parseTraffic(c *caddy.Controller) (*Traffic, error) {
 					return nil, c.ArgErr()
 				}
 				tlsServerName = c.Val()
-			case "ignore_health":
-				t.health = true
 			default:
 				return nil, c.Errf("unknown property '%s'", c.Val())
 			}

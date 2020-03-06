@@ -9,9 +9,10 @@ import (
 	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 )
 
-// SocketAddress holds a corepb.SocketAddress.
+// SocketAddress holds a corepb.SocketAddress and a health status
 type SocketAddress struct {
 	*corepb.SocketAddress
+	Health corepb.HealthStatus
 }
 
 // Address returns the address from s.
@@ -71,38 +72,38 @@ func (a *assignment) clusters() []string {
 }
 
 // Select selects a endpoint from cluster load assignments, using weighted random selection. It only selects endpoints that are reporting healthy.
-func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) {
+func (a *assignment) Select(cluster string, healthy bool) (*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
 	}
 
 	weight := 0
-	healthy := 0
+	health := 0
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
 			weight += int(lb.GetLoadBalancingWeight().GetValue())
-			healthy++
+			health++
 		}
 	}
-	if healthy == 0 {
+	if health == 0 {
 		return nil, true
 	}
 
 	// all weights are 0, randomly select one of the endpoints,
 	if weight == 0 {
-		r := rand.Intn(healthy)
+		r := rand.Intn(health)
 		i := 0
 		for _, ep := range cla.Endpoints {
 			for _, lb := range ep.GetLbEndpoints() {
-				if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 					continue
 				}
 				if r == i {
-					return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()}, true
+					return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress(), lb.GetHealthStatus()}, true
 				}
 				i++
 			}
@@ -110,15 +111,15 @@ func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) 
 		return nil, true
 	}
 
-	r := rand.Intn(healthy) + 1
+	r := rand.Intn(health) + 1
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
 			if r <= 0 {
-				return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()}, true
+				return &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress(), lb.GetHealthStatus()}, true
 			}
 		}
 	}
@@ -126,7 +127,7 @@ func (a *assignment) Select(cluster string, ignore bool) (*SocketAddress, bool) 
 }
 
 // All returns all healthy endpoints.
-func (a *assignment) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
+func (a *assignment) All(cluster string, healthy bool) ([]*SocketAddress, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
 		return nil, false
@@ -135,10 +136,10 @@ func (a *assignment) All(cluster string, ignore bool) ([]*SocketAddress, bool) {
 	sa := []*SocketAddress{}
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if !ignore && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
 				continue
 			}
-			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress()})
+			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress(), lb.GetHealthStatus()})
 		}
 	}
 	return sa, true
