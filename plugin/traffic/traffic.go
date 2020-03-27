@@ -100,7 +100,11 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	}
 
 	if sockaddr == nil {
-		log.Debugf("No (healthy) endpoints found for %q", cluster)
+		if cluster == t.mgmt {
+			log.Debugf("No (healthy) endpoints found for management cluster %q", cluster)
+		} else {
+			log.Debugf("No (healthy) endpoints found for %q", cluster)
+		}
 		m.Ns = soa(state.Zone)
 		w.WriteMsg(m)
 		return 0, nil
