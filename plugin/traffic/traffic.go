@@ -59,13 +59,22 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		labels := dns.SplitDomainName(cluster)
 		switch len(labels) {
 		case 2:
-			// endpoint or _tcp
+			// endpoint or _tcp or _grpc_config query
 			if strings.ToLower(labels[0]) == "_tcp" {
 				// nodata, because empty non-terminal
 				m.Ns = soa(state.Zone)
 				m.Rcode = dns.RcodeSuccess
 				w.WriteMsg(m)
 				return 0, nil
+			}
+			if strings.HasPrefix(strings.ToLower(labels[0]), "_grpc_config") {
+				// this is the grpc config blob encoded in a TXT record, we just return a NXDOMAIN
+				// make this a separate so we can insert some logic later.
+				m.Ns = soa(state.Zone)
+				m.Rcode = dns.RcodeNameError
+				w.WriteMsg(m)
+				return 0, nil
+
 			}
 			if strings.HasPrefix(strings.ToLower(labels[0]), "endpoint-") {
 				// recheck if the cluster exist.
