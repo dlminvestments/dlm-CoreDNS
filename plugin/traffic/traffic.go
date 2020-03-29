@@ -48,7 +48,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	m.SetReply(r)
 	m.Authoritative = true
 
-	healthy := state.QType() == dns.TypeTXT
+	healthy := state.QType() != dns.TypeTXT
 	sockaddr, ok := t.c.Select(cluster, healthy)
 	if !ok {
 		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
@@ -56,6 +56,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		// endpoint-N.cluster
 		// _grpclb._tcp.cluster
 		// _tcp.cluster
+		// _grpc_config.cluster (singled out here, but not handled)
 		labels := dns.SplitDomainName(cluster)
 		switch len(labels) {
 		case 2:

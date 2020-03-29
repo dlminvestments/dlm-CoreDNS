@@ -117,6 +117,16 @@ func TestTraffic(t *testing.T) {
 			},
 			cluster: "endpoint-1.web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.3",
 		},
+		// TXT query for _grpc_config
+		{
+			cla: &endpointpb.ClusterLoadAssignment{
+				ClusterName: "web",
+				Endpoints: endpoints([]EndpointHealth{
+					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+				}),
+			},
+			cluster: "_grpc_config.web", qtype: dns.TypeTXT, rcode: dns.RcodeNameError, ns: true,
+		},
 	}
 
 	ctx := context.TODO()
@@ -133,16 +143,16 @@ func TestTraffic(t *testing.T) {
 		rec := dnstest.NewRecorder(&test.ResponseWriter{})
 		_, err := tr.ServeDNS(ctx, rec, m)
 		if err != nil {
-			t.Errorf("Test %d: Expected no error, but got %q", i, err)
+			t.Errorf("Test %d: Expected no error for %q, but got %q", i, cl, err)
 		}
 		if rec.Msg.Rcode != tc.rcode {
-			t.Errorf("Test %d: Expected no rcode %d, but got %d", i, tc.rcode, rec.Msg.Rcode)
+			t.Errorf("Test %d: Expected no rcode %d for %q, but got %d", i, tc.rcode, cl, rec.Msg.Rcode)
 		}
 		if tc.ns && len(rec.Msg.Ns) == 0 {
-			t.Errorf("Test %d: Expected authority section, but got none", i)
+			t.Errorf("Test %d: Expected authority section for %q, but got none", i, cl)
 		}
 		if tc.answer != "" && len(rec.Msg.Answer) == 0 {
-			t.Fatalf("Test %d: Expected answer section, but got none", i)
+			t.Fatalf("Test %d: Expected answer section for %q, but got none", i, cl)
 		}
 		if tc.answer != "" {
 			record := rec.Msg.Answer[0]
@@ -158,7 +168,7 @@ func TestTraffic(t *testing.T) {
 				addr = x.Txt[3]
 			}
 			if tc.answer != addr {
-				t.Errorf("Test %d: Expected answer %s, but got %s", i, tc.answer, addr)
+				t.Errorf("Test %d: Expected answer %q for %q, but got %s", i, tc.answer, cl, addr)
 			}
 		}
 	}
