@@ -2,7 +2,6 @@ package traffic
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -31,9 +30,6 @@ func setup(c *caddy.Controller) error {
 	t, err := parseTraffic(c)
 	if err != nil {
 		return plugin.Error("traffic", err)
-	}
-	if _, err := json.Marshal(lbTXT); err != nil {
-		return fmt.Errorf("failed to marshal grpc serverConfig: %s", err)
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {

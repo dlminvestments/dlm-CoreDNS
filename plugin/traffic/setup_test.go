@@ -15,12 +15,13 @@ func TestSetup(t *testing.T) {
 }
 
 func TestLBTxt(t *testing.T) {
-	_, err := json.Marshal(lbTXT)
-	if err != nil {
-		t.Fatalf("Failed to marshal grpc serverConfig: %s", err)
-	}
-	if len(lbTXT) > 255 {
-		t.Fatalf("Too long grpc serverConfig (>255): %d", len(lbTXT))
+	for _, txt := range []string{lbTXTxds, lbTXTgrpc} {
+		if _, err := json.Marshal(txt); err != nil {
+			t.Errorf("Failed to marshal grpc serverConfig: %s", err)
+		}
+		if len(txt) > 255 {
+			t.Errorf("Too long grpc serverConfig (>255): %d", len(txt))
+		}
 	}
 }
 
