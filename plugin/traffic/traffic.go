@@ -70,7 +70,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			}
 			if strings.HasPrefix(strings.ToLower(labels[0]), "_grpc_config") {
 				// this is the grpc config blob encoded in a TXT record, see documentation for lbTXT.
-				m.Answer = txt(state.Zone)
+				m.Answer = txt(state.Zone, labels[1]) // 1 is the cluster
 				m.Rcode = dns.RcodeSuccess
 				w.WriteMsg(m)
 				return 0, nil
@@ -95,10 +95,16 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				w.WriteMsg(m)
 				return 0, nil
 			}
-			// OK, _grcplb._tcp query; we need to return the endpoint for the mgmt cluster *NOT* the cluster
-			// we got the query for. This should exist, but we'll check later anyway.
-			cluster = t.mgmt
-			sockaddr, _ = t.c.Select(cluster, healthy)
+			// OK, _grcplb._tcp query; we need to return the endpoint for the cluster in this query
+			cluster = labels[2]
+			sockaddr, ok = t.c.Select(cluster, healthy)
+			if !ok {
+				// nodata error when this cluster doesn't exist.
+				m.Ns = soa(state.Zone)
+				m.Rcode = dns.RcodeSuccess
+				w.WriteMsg(m)
+				return 0, nil
+			}
 			break
 		default:
 			m.Ns = soa(state.Zone)
