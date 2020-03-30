@@ -125,7 +125,7 @@ func TestTraffic(t *testing.T) {
 					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
 				}),
 			},
-			cluster: "_grpc_config.web", qtype: dns.TypeTXT, rcode: dns.RcodeNameError, ns: true,
+			cluster: "_grpc_config.web", qtype: dns.TypeTXT, rcode: dns.RcodeSuccess,
 		},
 	}
 

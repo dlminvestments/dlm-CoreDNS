@@ -69,10 +69,9 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				return 0, nil
 			}
 			if strings.HasPrefix(strings.ToLower(labels[0]), "_grpc_config") {
-				// this is the grpc config blob encoded in a TXT record, we just return a NXDOMAIN
-				// make this a separate so we can insert some logic later.
-				m.Ns = soa(state.Zone)
-				m.Rcode = dns.RcodeNameError
+				// this is the grpc config blob encoded in a TXT record, see documentation for lbTXT.
+				m.Answer = txt(state.Zone)
+				m.Rcode = dns.RcodeSuccess
 				w.WriteMsg(m)
 				return 0, nil
 
