@@ -15,7 +15,7 @@ func TestSetup(t *testing.T) {
 }
 
 func TestLBTxt(t *testing.T) {
-	for _, txt := range []string{lbTXTxds, lbTXTgrpc} {
+	for _, txt := range []string{lbTXT} {
 		if _, err := json.Marshal(txt); err != nil {
 			t.Errorf("Failed to marshal grpc serverConfig: %s", err)
 		}
