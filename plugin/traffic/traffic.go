@@ -54,28 +54,10 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
 		// legit is:
 		// endpoint-N.cluster
-		// _grpclb._tcp.cluster
 		// _tcp.cluster
-		// _grpc_config.cluster (singled out here, but not handled)
 		labels := dns.SplitDomainName(cluster)
 		switch len(labels) {
 		case 2:
-			// endpoint or _tcp or _grpc_config query
-			if strings.ToLower(labels[0]) == "_tcp" {
-				// nodata, because empty non-terminal
-				m.Ns = soa(state.Zone)
-				m.Rcode = dns.RcodeSuccess
-				w.WriteMsg(m)
-				return 0, nil
-			}
-			if strings.HasPrefix(strings.ToLower(labels[0]), "_grpc_config") {
-				// this is the grpc config blob encoded in a TXT record, see documentation for lbTXT.
-				m.Answer = txt(state.Zone, labels[1]) // 1 is the cluster
-				m.Rcode = dns.RcodeSuccess
-				w.WriteMsg(m)
-				return 0, nil
-
-			}
 			if strings.HasPrefix(strings.ToLower(labels[0]), "endpoint-") {
 				// recheck if the cluster exist.
 				cluster = labels[1]
@@ -88,24 +70,6 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				}
 				return t.serveEndpoint(ctx, state, labels[0], cluster, healthy)
 			}
-		case 3:
-			if strings.ToLower(labels[0]) != "_grpclb" || strings.ToLower(labels[1]) != "_tcp" {
-				m.Ns = soa(state.Zone)
-				m.Rcode = dns.RcodeNameError
-				w.WriteMsg(m)
-				return 0, nil
-			}
-			// OK, _grcplb._tcp query; we need to return the endpoint for the cluster in this query
-			cluster = labels[2]
-			sockaddr, ok = t.c.Select(cluster, healthy)
-			if !ok {
-				// nodata error when this cluster doesn't exist.
-				m.Ns = soa(state.Zone)
-				m.Rcode = dns.RcodeSuccess
-				w.WriteMsg(m)
-				return 0, nil
-			}
-			break
 		default:
 			m.Ns = soa(state.Zone)
 			m.Rcode = dns.RcodeNameError

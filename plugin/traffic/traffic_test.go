@@ -9,8 +9,9 @@ import (
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/coredns/coredns/plugin/traffic/xds"
 
-	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	xdspb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	corepb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	endpointpb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
 	"github.com/miekg/dns"
 	"google.golang.org/grpc"
 )
@@ -23,7 +24,7 @@ func TestTraffic(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla     *endpointpb.ClusterLoadAssignment
+		cla     *xdspb2.ClusterLoadAssignment
 		cluster string
 		qtype   uint16
 		rcode   int
@@ -31,98 +32,98 @@ func TestTraffic(t *testing.T) {
 		ns      bool   // should there be a ns section.
 	}{
 		{
-			cla:     &endpointpb.ClusterLoadAssignment{},
+			cla:     &xdspb2.ClusterLoadAssignment{},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, ns: true,
 		},
 		{
-			cla:     &endpointpb.ClusterLoadAssignment{},
+			cla:     &xdspb2.ClusterLoadAssignment{},
 			cluster: "web", qtype: dns.TypeSRV, rcode: dns.RcodeSuccess, ns: true,
 		},
 		{
-			cla:     &endpointpb.ClusterLoadAssignment{},
+			cla:     &xdspb2.ClusterLoadAssignment{},
 			cluster: "does-not-exist", qtype: dns.TypeA, rcode: dns.RcodeNameError, ns: true,
 		},
 		// healthy endpoint
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY}}),
+				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb2.HealthStatus_HEALTHY}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.1",
 		},
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb.HealthStatus_HEALTHY}}),
+				Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb2.HealthStatus_HEALTHY}}),
 			},
 			cluster: "web", qtype: dns.TypeAAAA, rcode: dns.RcodeSuccess, answer: "::1",
 		},
 		// unknown endpoint
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
-				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN}}),
+				Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb2.HealthStatus_UNKNOWN}}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, ns: true,
 		},
 		// unknown endpoint and healthy endpoint
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN},
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.1", 18008, corepb2.HealthStatus_UNKNOWN},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
 		},
 		// unknown endpoint and healthy endpoint, TXT query
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.1", 18008, corepb.HealthStatus_UNKNOWN},
+					{"127.0.0.1", 18008, corepb2.HealthStatus_UNKNOWN},
 				}),
 			},
 			cluster: "web", qtype: dns.TypeTXT, rcode: dns.RcodeSuccess, answer: "endpoint-0.web.lb.example.org.",
 		},
 		// SRV query healthy endpoint
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "web", qtype: dns.TypeSRV, rcode: dns.RcodeSuccess, answer: "endpoint-0.web.lb.example.org.",
 		},
 		// A query for endpoint-0.
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "endpoint-0.web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.2",
 		},
 		// A query for endpoint-1.
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
-					{"127.0.0.3", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
+					{"127.0.0.3", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "endpoint-1.web", qtype: dns.TypeA, rcode: dns.RcodeSuccess, answer: "127.0.0.3",
 		},
 		// TXT query for _grpc_config
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "_grpc_config.web", qtype: dns.TypeTXT, rcode: dns.RcodeSuccess,
@@ -182,7 +183,7 @@ func TestTrafficSRV(t *testing.T) {
 	tr := &Traffic{c: c, origins: []string{"lb.example.org."}}
 
 	tests := []struct {
-		cla     *endpointpb.ClusterLoadAssignment
+		cla     *xdspb2.ClusterLoadAssignment
 		cluster string
 		qtype   uint16
 		rcode   int
@@ -190,11 +191,11 @@ func TestTrafficSRV(t *testing.T) {
 	}{
 		// SRV query healthy endpoint
 		{
-			cla: &endpointpb.ClusterLoadAssignment{
+			cla: &xdspb2.ClusterLoadAssignment{
 				ClusterName: "web",
 				Endpoints: endpoints([]EndpointHealth{
-					{"127.0.0.2", 18008, corepb.HealthStatus_HEALTHY},
-					{"127.0.0.3", 18008, corepb.HealthStatus_HEALTHY},
+					{"127.0.0.2", 18008, corepb2.HealthStatus_HEALTHY},
+					{"127.0.0.3", 18008, corepb2.HealthStatus_HEALTHY},
 				}),
 			},
 			cluster: "web", qtype: dns.TypeSRV, rcode: dns.RcodeSuccess, answer: 2,
@@ -226,76 +227,33 @@ func TestTrafficSRV(t *testing.T) {
 	}
 }
 
-func TestTrafficManagement(t *testing.T) {
-	c, err := xds.New("127.0.0.1:0", "test-id", grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	tr := &Traffic{c: c, origins: []string{"lb.example.org."}, mgmt: "xds"}
-
-	for _, cla := range []*endpointpb.ClusterLoadAssignment{
-		&endpointpb.ClusterLoadAssignment{
-			ClusterName: "web",
-			Endpoints:   endpoints([]EndpointHealth{{"127.0.0.1", 18008, corepb.HealthStatus_HEALTHY}}),
-		},
-		&endpointpb.ClusterLoadAssignment{
-			ClusterName: "xds",
-			Endpoints:   endpoints([]EndpointHealth{{"::1", 18008, corepb.HealthStatus_HEALTHY}}),
-		},
-	} {
-		a := xds.NewAssignment()
-		a.SetClusterLoadAssignment(cla.ClusterName, cla)
-		c.SetAssignments(a)
-	}
-	ctx := context.TODO()
-
-	// Now we ask for the grpclb endpoint in the web cluster, this should give us the endpoint of the xds (mgmt) cluster.
-	// ; ANSWER SECTION:
-	// _grpclb._tcp.web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-0.xds.lb.example.org.
-	// ;; ADDITIONAL SECTION:
-	// endpoint-0.xds.lb.example.org.	5	IN	AAAA	::1
-
-	m := new(dns.Msg)
-	m.SetQuestion("_grpclb._tcp.web.lb.example.org.", dns.TypeSRV)
-	rec := dnstest.NewRecorder(&test.ResponseWriter{})
-	if _, err := tr.ServeDNS(ctx, rec, m); err != nil {
-		t.Errorf("Expected no error, but got %q", err)
-	}
-	if len(rec.Msg.Answer) == 0 {
-		t.Fatalf("Expected answer section, got none")
-	}
-	if x := rec.Msg.Answer[0].(*dns.SRV).Target; x != "endpoint-0.xds.lb.example.org." {
-		t.Errorf("Expected %s, got %s", "endpoint-0.xds.lb.example.org.", x)
-	}
-}
-
 type EndpointHealth struct {
 	Address string
 	Port    uint16
-	Health  corepb.HealthStatus
+	Health  corepb2.HealthStatus
 }
 
-func endpoints(e []EndpointHealth) []*endpointpb.LocalityLbEndpoints {
+func endpoints(e []EndpointHealth) []*endpointpb2.LocalityLbEndpoints {
 	return endpointsWithLocality(e, xds.Locality{})
 }
 
-func endpointsWithLocality(e []EndpointHealth, loc xds.Locality) []*endpointpb.LocalityLbEndpoints {
-	ep := make([]*endpointpb.LocalityLbEndpoints, len(e))
+func endpointsWithLocality(e []EndpointHealth, loc xds.Locality) []*endpointpb2.LocalityLbEndpoints {
+	ep := make([]*endpointpb2.LocalityLbEndpoints, len(e))
 	for i := range e {
-		ep[i] = &endpointpb.LocalityLbEndpoints{
-			Locality: &corepb.Locality{
+		ep[i] = &endpointpb2.LocalityLbEndpoints{
+			Locality: &corepb2.Locality{
 				Region:  loc.Region,
 				Zone:    loc.Zone,
 				SubZone: loc.SubZone,
 			},
-			LbEndpoints: []*endpointpb.LbEndpoint{{
-				HostIdentifier: &endpointpb.LbEndpoint_Endpoint{
-					Endpoint: &endpointpb.Endpoint{
-						Address: &corepb.Address{
-							Address: &corepb.Address_SocketAddress{
-								SocketAddress: &corepb.SocketAddress{
+			LbEndpoints: []*endpointpb2.LbEndpoint{{
+				HostIdentifier: &endpointpb2.LbEndpoint_Endpoint{
+					Endpoint: &endpointpb2.Endpoint{
+						Address: &corepb2.Address{
+							Address: &corepb2.Address_SocketAddress{
+								SocketAddress: &corepb2.SocketAddress{
 									Address: e[i].Address,
-									PortSpecifier: &corepb.SocketAddress_PortValue{
+									PortSpecifier: &corepb2.SocketAddress_PortValue{
 										PortValue: uint32(e[i].Port),
 									},
 								},

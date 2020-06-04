@@ -5,14 +5,14 @@ import (
 	"net"
 	"sync"
 
-	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
-	endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	xdspb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	corepb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 )
 
-// SocketAddress holds a corepb.SocketAddress and a health status
+// SocketAddress holds a corepb2.SocketAddress and a health status
 type SocketAddress struct {
-	*corepb.SocketAddress
-	Health corepb.HealthStatus
+	*corepb2.SocketAddress
+	Health corepb2.HealthStatus
 }
 
 // Address returns the address from s.
@@ -23,16 +23,16 @@ func (s *SocketAddress) Port() uint16 { return uint16(s.GetPortValue()) }
 
 type assignment struct {
 	mu  sync.RWMutex
-	cla map[string]*endpointpb.ClusterLoadAssignment
+	cla map[string]*xdspb2.ClusterLoadAssignment
 }
 
 // NewAssignment returns a pointer to an assignment.
 func NewAssignment() *assignment {
-	return &assignment{cla: make(map[string]*endpointpb.ClusterLoadAssignment)}
+	return &assignment{cla: make(map[string]*xdspb2.ClusterLoadAssignment)}
 }
 
 // SetClusterLoadAssignment sets the assignment for the cluster to cla.
-func (a *assignment) SetClusterLoadAssignment(cluster string, cla *endpointpb.ClusterLoadAssignment) {
+func (a *assignment) SetClusterLoadAssignment(cluster string, cla *xdspb2.ClusterLoadAssignment) {
 	// If cla is nil we just found a cluster, check if we already know about it, or if we need to make a new entry.
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -49,7 +49,7 @@ func (a *assignment) SetClusterLoadAssignment(cluster string, cla *endpointpb.Cl
 }
 
 // ClusterLoadAssignment returns the assignment for the cluster or nil if there is none.
-func (a *assignment) ClusterLoadAssignment(cluster string) *endpointpb.ClusterLoadAssignment {
+func (a *assignment) ClusterLoadAssignment(cluster string) *xdspb2.ClusterLoadAssignment {
 	a.mu.RLock()
 	cla, ok := a.cla[cluster]
 	a.mu.RUnlock()
@@ -82,7 +82,7 @@ func (a *assignment) Select(cluster string, healthy bool) (*SocketAddress, bool)
 	health := 0
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb2.HealthStatus_HEALTHY {
 				continue
 			}
 			weight += int(lb.GetLoadBalancingWeight().GetValue())
@@ -99,7 +99,7 @@ func (a *assignment) Select(cluster string, healthy bool) (*SocketAddress, bool)
 		i := 0
 		for _, ep := range cla.Endpoints {
 			for _, lb := range ep.GetLbEndpoints() {
-				if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+				if healthy && lb.GetHealthStatus() != corepb2.HealthStatus_HEALTHY {
 					continue
 				}
 				if r == i {
@@ -114,7 +114,7 @@ func (a *assignment) Select(cluster string, healthy bool) (*SocketAddress, bool)
 	r := rand.Intn(health) + 1
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb2.HealthStatus_HEALTHY {
 				continue
 			}
 			r -= int(lb.GetLoadBalancingWeight().GetValue())
@@ -136,7 +136,7 @@ func (a *assignment) All(cluster string, healthy bool) ([]*SocketAddress, bool) 
 	sa := []*SocketAddress{}
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
-			if healthy && lb.GetHealthStatus() != corepb.HealthStatus_HEALTHY {
+			if healthy && lb.GetHealthStatus() != corepb2.HealthStatus_HEALTHY {
 				continue
 			}
 			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress(), lb.GetHealthStatus()})

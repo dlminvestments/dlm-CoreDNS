@@ -1,7 +1,6 @@
 package traffic
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/caddyserver/caddy"
@@ -11,17 +10,6 @@ func TestSetup(t *testing.T) {
 	c := caddy.NewTestController("dns", `traffic grpc://127.0.0.1`)
 	if err := setup(c); err != nil {
 		t.Fatalf("Expected no errors, but got: %q", err)
-	}
-}
-
-func TestLBTxt(t *testing.T) {
-	for _, txt := range []string{lbTXT} {
-		if _, err := json.Marshal(txt); err != nil {
-			t.Errorf("Failed to marshal grpc serverConfig: %s", err)
-		}
-		if len(txt) > 255 {
-			t.Errorf("Too long grpc serverConfig (>255): %d", len(txt))
-		}
 	}
 }
 

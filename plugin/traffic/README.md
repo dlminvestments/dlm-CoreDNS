@@ -47,11 +47,7 @@ is smart enough to select the best one. When SRV records are returned, the endpo
 are synthesized `endpoint-<N>.<cluster>.<zone>` that carries the IP address. Querying for these
 synthesized names works as well.
 
-[gRPC LB SRV records](https://github.com/grpc/proposal/blob/master/A5-grpclb-in-dns.md) are
-supported and returned by the *traffic* plugin for all clusters. The returned endpoints are,
-however, the ones from the management cluster.
-
-*Traffic* implements version 3 of the xDS API. It works with the management server as written in
+*Traffic* implements version 2 of the xDS API. It works with the management server as written in
 <https://github.com/miekg/xds>.
 
 ## Syntax
