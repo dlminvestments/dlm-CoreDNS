@@ -101,14 +101,10 @@ When a cluster is named this usually consists out of a single word, i.e. "cluste
 The *traffic* plugins uses the name(s) specified in the Server Block to create fully qualified
 domain names. For example if the Server Block specifies `lb.example.org` as one of the names,
 and "cluster-v0" is one of the load balanced cluster, *traffic* will respond to queries asking for
-`cluster-v0.lb.example.org.` and the same goes for `web`; `web.lb.example.org`.
+`cluster-v0.lb.example.org.` and the same goes for "web"; `web.lb.example.org`.
 
 For SRV queries all endpoints are returned, the SRV target names are synthesized:
 `endpoint-<N>.web.lb.example.org` to take the example from above. *N* is an integer starting with 0.
-
-The gRPC load balancer name: `_grpclb._tcp.<cluster>.<zone>` will also be resolved in the same way
-as normal SRV queries. gRPC uses this to find load balancers. Note that the addresses returned in
-this care are from the management cluster.
 
 ## Matching Algorithm
 
@@ -150,7 +146,7 @@ This will load balance any names under `lb.example.org` using the data from the 
 localhost on port 18000. The node ID will be `test-id` and no TLS will be used. Assuming a
 management server returns config for `web` cluster, you can query CoreDNS for it, below we do an
 address lookup, which returns an address for the endpoint. The second example shows a SRV lookup
-which returns all endpoints. The third shows what gRPC will ask for when looking for load balancers.
+which returns all endpoints.
 
 ~~~ sh
 $ dig web.lb.example.org +noall +answer
@@ -164,16 +160,6 @@ web.lb.example.org.	5	IN	SRV	100 100 18008 endpoint-2.web.lb.example.org.
 endpoint-0.web.lb.example.org. 5 IN	A	127.0.1.1
 endpoint-1.web.lb.example.org. 5 IN	A	127.0.1.2
 endpoint-2.web.lb.example.org. 5 IN	A	127.0.2.1
-
-$ dig _grpclb._tcp.web.lb.example.org SRV +noall +answer +additional
-
-_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-0.xds.lb.example.org.
-_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-1.xds.lb.example.org.
-_grpclb._tcp.web.lb.example.org. 5 IN	SRV	100 100 18008 endpoint-2.xds.lb.example.org.
-
-endpoint-0.xds.lb.example.org. 5 IN	A	10.0.1.1
-endpoint-1.xds.lb.example.org. 5 IN	A	10.0.1.2
-endpoint-2.xds.lb.example.org. 5 IN	A	10.0.2.1
 ~~~
 
 ## Bugs
