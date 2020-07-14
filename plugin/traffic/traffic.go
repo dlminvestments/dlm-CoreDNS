@@ -54,7 +54,6 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		// ok this cluster doesn't exist, potentially due to extra labels, which may be garbage or legit queries:
 		// legit is:
 		// endpoint-N.cluster
-		// _tcp.cluster
 		labels := dns.SplitDomainName(cluster)
 		switch len(labels) {
 		case 2:
