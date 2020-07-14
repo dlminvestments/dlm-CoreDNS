@@ -165,14 +165,14 @@ endpoint-2.web.lb.example.org. 5 IN	A	127.0.2.1
 ## Bugs
 
 Credentials are not implemented. Bootstrapping is not fully implemented, *traffic* will connect to
-the first working **TO** address, but then stops short of re-connecting to he endpoints is received
-for the management **CLUSTER**.
+the first working **TO** address, but then stops short of re-connecting to the endpoints of the
+management **CLUSTER**.
 
 Load reporting is not supported for the following reason: A DNS query is done by a resolver.
 Behind this resolver (which can also cache) there may be many clients that will use this reply. The
 responding server (CoreDNS) has no idea how many clients use this resolver. So reporting a load of
 +1 on the CoreDNS side can results in anything from 1 to 1000+ of queries on the endpoint, making
-the load reporting from *traffic* highly inaccurate.
+the load reporting from the *traffic* plugin highly inaccurate. Hence it is not done.
 
 ## Also See
 
