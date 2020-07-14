@@ -13,7 +13,7 @@ import (
 	"github.com/coredns/coredns/plugin/traffic/xds"
 	"github.com/coredns/coredns/request"
 
-	corepb "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	corepb2 "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/miekg/dns"
 )
 
@@ -129,7 +129,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 			m.Answer = append(m.Answer, &dns.TXT{
 				Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5},
-				Txt: []string{"100", "100", strconv.Itoa(int(sa.Port())), target, corepb.HealthStatus_name[int32(sa.Health)]}})
+				Txt: []string{"100", "100", strconv.Itoa(int(sa.Port())), target, corepb2.HealthStatus_name[int32(sa.Health)]}})
 			m.Extra = append(m.Extra, &dns.TXT{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5}, Txt: []string{sa.Address().String()}})
 		}
 	default:
