@@ -11,7 +11,7 @@ of clusters. A cluster is defined as: "A group of logically similar endpoints th
 connects to." Each cluster has a name, which *traffic* extends to be a domain name. See "Naming
 Clusters" below.
 
-The use case for this plugin is when a cluster has endpoints running in multiple (Kubernetes?)
+The use case for this plugin is when a cluster has endpoints running in multiple (e.g. Kubernetes)
 clusters and you need to steer traffic to (or away) from these endpoints, i.e. endpoint A needs to
 be upgraded, so all traffic to it is drained. Or the entire Kubernetes needs to upgraded, and *all*
 endpoints need to be drained from it.
