@@ -126,21 +126,27 @@ func (a *assignment) Select(cluster string, healthy bool) (*SocketAddress, bool)
 	return nil, true
 }
 
-// All returns all healthy endpoints.
-func (a *assignment) All(cluster string, healthy bool) ([]*SocketAddress, bool) {
+// All returns all healthy endpoints, together with their weights.
+func (a *assignment) All(cluster string, healthy bool) ([]*SocketAddress, []uint32, bool) {
 	cla := a.ClusterLoadAssignment(cluster)
 	if cla == nil {
-		return nil, false
+		return nil, nil, false
 	}
 
 	sa := []*SocketAddress{}
+	we := []uint32{}
 	for _, ep := range cla.Endpoints {
 		for _, lb := range ep.GetLbEndpoints() {
 			if healthy && lb.GetHealthStatus() != corepb2.HealthStatus_HEALTHY {
 				continue
 			}
+			weight := lb.GetLoadBalancingWeight().GetValue()
+			if weight > 2^16 {
+				log.Warning("Weight in cluster %q > %d, truncating to %d in SRV responses", cluster, weight, uint16(weight))
+			}
+			we = append(we, weight)
 			sa = append(sa, &SocketAddress{lb.GetEndpoint().GetAddress().GetSocketAddress(), lb.GetHealthStatus()})
 		}
 	}
-	return sa, true
+	return sa, we, true
 }

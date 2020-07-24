@@ -108,7 +108,7 @@ For SRV queries all endpoints are returned, the SRV target names are synthesized
 
 ## Matching Algorithm
 
-How are clients match against the data we receive from xDS endpoint?
+How are queries match against the data we receive from xDS endpoint?
 
 1.  Does the cluster exist? If not return NXDOMAIN, otherwise continue.
 
@@ -116,7 +116,9 @@ How are clients match against the data we receive from xDS endpoint?
     endpoint return a NODATA response, otherwise continue.
 
 3.  If weights are assigned, use those to pick an endpoint, otherwise randomly pick one and return a
-    response to the client.
+    response to the client. Weights are copied from the xDS data, priority is not used and set to 0
+    for all SRV records. Note that weights in SRV records are 16 bits, but xDS uses uint32; you have
+    been warned.
 
 ## Metrics
 

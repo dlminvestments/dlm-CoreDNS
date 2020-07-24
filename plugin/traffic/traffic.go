@@ -103,7 +103,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		}
 		m.Answer = []dns.RR{&dns.AAAA{Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sockaddr.Address()}}
 	case dns.TypeSRV:
-		sockaddrs, _ := t.c.All(cluster, true)
+		sockaddrs, weights, _ := t.c.All(cluster, true)
 		m.Answer = make([]dns.RR, 0, len(sockaddrs))
 		m.Extra = make([]dns.RR, 0, len(sockaddrs))
 		for i, sa := range sockaddrs {
@@ -111,7 +111,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 			m.Answer = append(m.Answer, &dns.SRV{
 				Hdr:      dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeSRV, Class: dns.ClassINET, Ttl: 5},
-				Priority: 100, Weight: 100, Port: sa.Port(), Target: target})
+				Priority: 0, Weight: uint16(weights[i]), Port: sa.Port(), Target: target})
 
 			if sa.Address().To4() == nil {
 				m.Extra = append(m.Extra, &dns.AAAA{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: 5}, AAAA: sa.Address()})
@@ -120,7 +120,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 			}
 		}
 	case dns.TypeTXT:
-		sockaddrs, _ := t.c.All(cluster, false)
+		sockaddrs, weights, _ := t.c.All(cluster, false)
 		m.Answer = make([]dns.RR, 0, len(sockaddrs))
 		m.Extra = make([]dns.RR, 0, len(sockaddrs))
 		for i, sa := range sockaddrs {
@@ -128,7 +128,7 @@ func (t *Traffic) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 			m.Answer = append(m.Answer, &dns.TXT{
 				Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5},
-				Txt: []string{"100", "100", strconv.Itoa(int(sa.Port())), target, corepb2.HealthStatus_name[int32(sa.Health)]}})
+				Txt: []string{"0", strconv.Itoa(int(uint16(weights[i]))), strconv.Itoa(int(sa.Port())), target, corepb2.HealthStatus_name[int32(sa.Health)]}})
 			m.Extra = append(m.Extra, &dns.TXT{Hdr: dns.RR_Header{Name: target, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 5}, Txt: []string{sa.Address().String()}})
 		}
 	default:
@@ -162,7 +162,7 @@ func (t *Traffic) serveEndpoint(ctx context.Context, state request.Request, endp
 		return 0, nil
 	}
 
-	sockaddrs, _ := t.c.All(cluster, healthy)
+	sockaddrs, _, _ := t.c.All(cluster, healthy)
 	if len(sockaddrs) < nr {
 		m.Ns = soa(state.Zone)
 		m.Rcode = dns.RcodeNameError

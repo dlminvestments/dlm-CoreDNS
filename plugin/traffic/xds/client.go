@@ -205,9 +205,9 @@ func (c *Client) Select(cluster string, healty bool) (*SocketAddress, bool) {
 }
 
 // All returns all endpoints.
-func (c *Client) All(cluster string, healty bool) ([]*SocketAddress, bool) {
+func (c *Client) All(cluster string, healty bool) ([]*SocketAddress, []uint32, bool) {
 	if cluster == "" {
-		return nil, false
+		return nil, nil, false
 	}
 	return c.assignments.All(cluster, healty)
 }
