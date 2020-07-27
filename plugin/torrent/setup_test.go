@@ -13,10 +13,10 @@ func TestParse(t *testing.T) {
 		exp       *Torrent
 	}{
 		{`torrent testdata/db.miek.nl {
-			seed
+			dht
 		 }`,
 			false,
-			&Torrent{dbfile: "testdata/db.miek.nl", seed: true},
+			&Torrent{dbfile: "testdata/db.miek.nl", dht: true},
 		},
 		{`torrent testdata/db.miek.nl`,
 			false,
@@ -46,8 +46,8 @@ func TestParse(t *testing.T) {
 		if x := tor.dbfile; x != tc.exp.dbfile {
 			t.Errorf("Test %d expected %s as dbfile, got %s", i, tc.exp.dbfile, x)
 		}
-		if x := tor.seed; x != tc.exp.seed {
-			t.Errorf("Test %d expected %T as seed, got %T", i, tc.exp.seed, x)
+		if x := tor.dth; x != tc.exp.dth {
+			t.Errorf("Test %d expected %T as seed, got %T", i, tc.exp.dth, x)
 		}
 	}
 }

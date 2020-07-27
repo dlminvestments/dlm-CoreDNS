@@ -14,12 +14,12 @@ func init() { plugin.Register("torrent", setup) }
 func setup(c *caddy.Controller) error {
 	tor, err := parse(c)
 	if err != nil {
-		return plugin.Error("sign", err)
+		return plugin.Error("torrent", err)
 	}
 
 	c.OnStartup(func() error {
-		// go tor.do()
-		return nil
+		err := tor.Do()
+		return err
 	})
 	c.OnShutdown(func() error {
 		close(tor.stop)
@@ -31,7 +31,7 @@ func setup(c *caddy.Controller) error {
 }
 
 func parse(c *caddy.Controller) (*Torrent, error) {
-	t := &Torrent{}
+	t := &Torrent{stop: make(chan struct{})}
 	config := dnsserver.GetConfig(c)
 
 	for c.Next() {
@@ -46,8 +46,8 @@ func parse(c *caddy.Controller) (*Torrent, error) {
 
 		for c.NextBlock() {
 			switch c.Val() {
-			case "seed":
-				t.seed = true
+			case "dht":
+				t.dht = true
 			default:
 				return nil, c.Errf("unknown property '%s'", c.Val())
 			}

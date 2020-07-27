@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.33.7
 	github.com/caddyserver/caddy v1.0.5
 	github.com/cenkalti/backoff/v4 v4.0.2
+	github.com/cenkalti/rain v1.4.4
 	github.com/dnstap/golang-dnstap v0.2.0
 	github.com/farsightsec/golang-framestream v0.0.0-20190425193708-fa4b164d59b8
 	github.com/golang/protobuf v1.4.2
@@ -20,6 +21,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/infobloxopen/go-trees v0.0.0-20190313150506-2af4e13f9062
+	github.com/jackpal/bencode-go v0.0.0-20180813173944-227668e840fa
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/miekg/dns v1.1.30
@@ -31,6 +33,7 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.10.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
+	github.com/zeebo/bencode v1.0.0
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200306183522-221f0cc107cb
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9

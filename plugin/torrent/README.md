@@ -26,13 +26,13 @@ For peers seeding the torrent use this, slightly expanded, syntax
 
 ~~~ txt
 torrent DBFILE {
-    seed
+    dht
+//    directory (temp storage)
+//    port for dth, etc.
 }
 ~~~
 
-* `seed` tells *torrent* to seed content from **DBFILE** to the peers, it will _never_ write to
-  **DBFILE**. When `seed` is _not_ specified **DBFILE** will be written to once the entire torrent
-  is downloaded.
+* `dth` starts a DTH server on address
 
 ## Examples
 
