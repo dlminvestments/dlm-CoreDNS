@@ -55,5 +55,5 @@ var Directives = []string{
 	"whoami",
 	"on",
 	"sign",
-	"torrent",
+	"bittorrent",
 }
