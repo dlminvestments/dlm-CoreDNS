@@ -6,10 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
-
-	"github.com/caddyserver/caddy"
 )
 
 var log = clog.NewWithPlugin("reload")
@@ -67,11 +66,9 @@ func setup(c *caddy.Controller) error {
 	// prepare info for next onInstanceStartup event
 	r.setInterval(i)
 	r.setUsage(used)
-
 	once.Do(func() {
 		caddy.RegisterEventHook("reload", hook)
 	})
-
 	// re-register on finalShutDown as the instance most-likely will be changed
 	shutOnce.Do(func() {
 		c.OnFinalShutdown(func() error {

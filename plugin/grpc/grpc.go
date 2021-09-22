@@ -3,11 +3,11 @@ package grpc
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/debug"
-	"github.com/coredns/coredns/plugin/pkg/policy"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
@@ -18,7 +18,7 @@ import (
 // It has a list of proxies each representing one upstream proxy.
 type GRPC struct {
 	proxies []*Proxy
-	p       policy.Policy
+	p       Policy
 
 	from    string
 	ignored []string
@@ -37,10 +37,10 @@ func (g *GRPC) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 	}
 
 	var (
-		span, child ot.Span
-		ret         *dns.Msg
-		err         error
-		i           int
+		span, child      ot.Span
+		ret              *dns.Msg
+		upstreamErr, err error
+		i                int
 	)
 	span = ot.SpanFromContext(ctx)
 	list := g.list()
@@ -74,6 +74,8 @@ func (g *GRPC) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 			child.Finish()
 		}
 
+		upstreamErr = err
+
 		// Check if the reply is correct; if not return FormErr.
 		if !state.Match(ret) {
 			debug.Hexdumpf(ret, "Wrong reply for id: %d, %s %d", ret.Id, state.QName(), state.QType())
@@ -88,13 +90,17 @@ func (g *GRPC) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 		return 0, nil
 	}
 
-	return 0, nil
+	if upstreamErr != nil {
+		return dns.RcodeServerFailure, upstreamErr
+	}
+
+	return dns.RcodeServerFailure, ErrNoHealthy
 }
 
 // NewGRPC returns a new GRPC.
 func newGRPC() *GRPC {
 	g := &GRPC{
-		p: new(policy.Random),
+		p: new(random),
 	}
 	return g
 }
@@ -127,11 +133,11 @@ func (g *GRPC) isAllowedDomain(name string) bool {
 }
 
 // List returns a set of proxies to be used for this client depending on the policy in p.
-func (g *GRPC) list() []*Proxy {
-	if len(g.p.List(g.proxies)) == 1 {
-		return g.p.List(g.proxies)[0].([]*Proxy)
-	}
-	return nil
-}
+func (g *GRPC) list() []*Proxy { return g.p.List(g.proxies) }
 
 const defaultTimeout = 5 * time.Second
+
+var (
+	// ErrNoHealthy means no healthy proxies left.
+	ErrNoHealthy = errors.New("no healthy gRPC proxies")
+)

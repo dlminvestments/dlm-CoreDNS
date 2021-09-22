@@ -3,9 +3,8 @@ package hosts
 import (
 	"testing"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin/pkg/fall"
-
-	"github.com/caddyserver/caddy"
 )
 
 func TestHostsParse(t *testing.T) {
@@ -167,5 +166,4 @@ func TestHostsInlineParse(t *testing.T) {
 			}
 		}
 	}
-
 }

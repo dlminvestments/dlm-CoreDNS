@@ -18,16 +18,16 @@ func TestZoneReload(t *testing.T) {
 	defer rm()
 
 	// Corefile with two stanzas
-	corefile := `example.org:0 {
-       file ` + name + ` {
-           reload 1s
-       }
-}
+	corefile := `
+	example.org:0 {
+		file ` + name + ` {
+			reload 0.01s
+		}
+	}
+	example.net:0 {
+		file ` + name + `
+	}`
 
-example.net:0 {
-	file ` + name + `
-}
-`
 	i, udp, _, err := CoreDNSServerAndPorts(corefile)
 	if err != nil {
 		t.Fatalf("Could not get CoreDNS serving instance: %s", err)
@@ -47,7 +47,7 @@ example.net:0 {
 	// Remove RR from the Apex
 	ioutil.WriteFile(name, []byte(exampleOrgUpdated), 0644)
 
-	time.Sleep(2 * time.Second) // reload time
+	time.Sleep(20 * time.Millisecond) // reload time, with some race insurance
 
 	resp, err = dns.Exchange(m, udp)
 	if err != nil {
@@ -55,7 +55,7 @@ example.net:0 {
 	}
 
 	if len(resp.Answer) != 1 {
-		t.Fatalf("Expected two RR in answer section got %d", len(resp.Answer))
+		t.Fatalf("Expected one RR in answer section got %d", len(resp.Answer))
 	}
 }
 

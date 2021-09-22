@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin/pkg/fall"
 
-	"github.com/caddyserver/caddy"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -321,6 +321,19 @@ kubernetes cluster.local`,
 			true,
 			"Wrong argument count or unexpected line ending after",
 			-1,
+			0,
+			"",
+			"",
+			podModeDisabled,
+			fall.Zero,
+		},
+		{
+			`kubernetes coredns.local {
+	kubeconfig file
+}`,
+			false,
+			"",
+			1,
 			0,
 			"",
 			"",

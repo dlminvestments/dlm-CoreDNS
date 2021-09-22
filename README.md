@@ -27,13 +27,13 @@ Currently CoreDNS is able to:
 * Retrieve zone data from primaries, i.e., act as a secondary server (AXFR only) (*secondary*).
 * Sign zone data on-the-fly (*dnssec*).
 * Load balancing of responses (*loadbalance*).
-* Allow for zone transfers, i.e., act as a primary server (*file*).
+* Allow for zone transfers, i.e., act as a primary server (*file* + *transfer*).
 * Automatically load zone files from disk (*auto*).
 * Caching of DNS responses (*cache*).
 * Use etcd as a backend (replacing [SkyDNS](https://github.com/skynetservices/skydns)) (*etcd*).
 * Use k8s (kubernetes) as a backend (*kubernetes*).
 * Serve as a proxy to forward queries to some other (recursive) nameserver (*forward*).
-* Provide metrics (by using Prometheus) (*metrics*).
+* Provide metrics (by using Prometheus) (*prometheus*).
 * Provide query (*log*) and error (*errors*) logging.
 * Integrate with cloud providers (*route53*).
 * Support the CH class: `version.bind` and friends (*chaos*).
@@ -41,6 +41,7 @@ Currently CoreDNS is able to:
 * Profiling support (*pprof*).
 * Rewrite queries (qtype, qclass and qname) (*rewrite* and *template*).
 * Block ANY queries (*any*).
+* Provide DNS64 IPv6 Translation (*dns64*).
 
 And more. Each of the plugins is documented. See [coredns.io/plugins](https://coredns.io/plugins)
 for all in-tree plugins, and [coredns.io/explugins](https://coredns.io/explugins) for all
@@ -69,7 +70,7 @@ CoreDNS requires Go to compile. However, if you already have docker installed an
 setup a Go environment, you could build CoreDNS easily:
 
 ```
-$ docker run --rm -i -t -v $PWD:/v -w /v golang:1.12 make
+$ docker run --rm -i -t -v $PWD:/v -w /v golang:1.16 make
 ```
 
 The above command alone will have `coredns` binary generated.
@@ -86,15 +87,38 @@ CoreDNS-1.6.6
 linux/amd64, go1.13.5, aa8c32
 ~~~
 
+The following could be used to query the CoreDNS server that is running now:
+
+~~~ txt
+dig @127.0.0.1 -p 53 www.example.com
+~~~
+
 Any query sent to port 53 should return some information; your sending address, port and protocol
 used. The query should also be logged to standard output.
+
+The configuration of CoreDNS is done through a file named `Corefile`. When CoreDNS starts, it will
+look for the `Corefile` from the current working directory. A `Corefile` for CoreDNS server that listens
+on port `53` and enables `whoami` plugin is:
+
+~~~ corefile
+.:53 {
+    whoami
+}
+~~~
+
+Sometimes port number 53 is occupied by system processes. In that case you can start the CoreDNS server
+while modifying the Corefile as given below so that the CoreDNS server starts on port 1053.
+
+~~~ corefile
+.:1053 {
+    whoami
+}
+~~~
 
 If you have a Corefile without a port number specified it will, by default, use port 53, but you can
 override the port with the `-dns.port` flag: `coredns -dns.port 1053`, runs the server on port 1053.
 
-Start a simple proxy. You'll need to be root to start listening on port 53.
-
-`Corefile` contains:
+A Corefile for a CoreDNS server that forward any queries to an upstream DNS (e.g., `8.8.8.8`) is as follows:
 
 ~~~ corefile
 .:53 {
@@ -113,9 +137,9 @@ send notifies to it.
 
 ~~~ txt
 example.org:1053 {
-    file /var/lib/coredns/example.org.signed {
-        transfer to *
-        transfer to 2001:500:8f::53
+    file /var/lib/coredns/example.org.signed
+    transfer {
+        to * 2001:500:8f::53
     }
     errors
     log
@@ -127,9 +151,9 @@ recursive nameserver *and* rewrite ANY queries to HINFO.
 
 ~~~ txt
 example.org:1053 {
-    file /var/lib/coredns/example.org.signed {
-        transfer to *
-        transfer to 2001:500:8f::53
+    file /var/lib/coredns/example.org.signed
+    transfer {
+        to * 2001:500:8f::53
     }
     errors
     log
@@ -171,13 +195,16 @@ And for DNS over HTTP/2 (DoH) use:
 ~~~ corefile
 https://example.org {
     whoami
+    tls mycert mykey
 }
 ~~~
+
+Note that you must have the *tls* plugin configured as DoH requires that to be setup.
 
 Specifying ports works in the same way:
 
 ~~~ txt
-grpc://example.org:1443 {
+grpc://example.org:1443 https://example.org:1444 {
     # ...
 }
 ~~~

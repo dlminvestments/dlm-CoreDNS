@@ -8,6 +8,7 @@ import (
 
 	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	"github.com/coredns/coredns/plugin/transfer"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
@@ -20,6 +21,7 @@ type (
 	File struct {
 		Next plugin.Handler
 		Zones
+		transfer *transfer.Transfer
 	}
 
 	// Zones maps zone names to a *Zone.
@@ -43,6 +45,11 @@ func (f File) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	z, ok := f.Zones.Z[zone]
 	if !ok || z == nil {
 		return dns.RcodeServerFailure, nil
+	}
+
+	// If transfer is not loaded, we'll see these, answer with refused (no transfer allowed).
+	if state.QType() == dns.TypeAXFR || state.QType() == dns.TypeIXFR {
+		return dns.RcodeRefused, nil
 	}
 
 	// This is only for when we are a secondary zones.
@@ -77,11 +84,6 @@ func (f File) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 		return dns.RcodeServerFailure, nil
 	}
 
-	if state.QType() == dns.TypeAXFR || state.QType() == dns.TypeIXFR {
-		xfr := Xfr{z}
-		return xfr.ServeDNS(ctx, w, r)
-	}
-
 	answer, ns, extra, result := z.Lookup(ctx, state, qname)
 
 	m := new(dns.Msg)
@@ -97,7 +99,14 @@ func (f File) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	case Delegation:
 		m.Authoritative = false
 	case ServerFailure:
-		return dns.RcodeServerFailure, nil
+		// If the result is SERVFAIL and the answer is non-empty, then the SERVFAIL came from an
+		// external CNAME lookup and the answer contains the CNAME with no target record. We should
+		// write the CNAME record to the client instead of sending an empty SERVFAIL response.
+		if len(m.Answer) == 0 {
+			return dns.RcodeServerFailure, nil
+		}
+		//  The rcode in the response should be the rcode received from the target lookup. RFC 6604 section 3
+		m.Rcode = dns.RcodeServerFailure
 	}
 
 	w.WriteMsg(m)

@@ -3,7 +3,7 @@ package acl
 import (
 	"testing"
 
-	"github.com/caddyserver/caddy"
+	"github.com/coredns/caddy"
 )
 
 func TestSetup(t *testing.T) {
@@ -39,6 +39,13 @@ func TestSetup(t *testing.T) {
 			`acl {
 				allow type * net 192.168.1.0/24
 				block type * net 192.168.0.0/16
+			}`,
+			false,
+		},
+		{
+			"Filter 1",
+			`acl {
+				filter type A net 192.168.0.0/16
 			}`,
 			false,
 		},
@@ -150,6 +157,13 @@ func TestSetup(t *testing.T) {
 			`acl {
 				allow net 2001:db8:abcd:0012::0/64
 				block net 2001:db8:abcd:0012::0/48
+			}`,
+			false,
+		},
+		{
+			"Filter 1 IPv6",
+			`acl {
+				filter type A net 2001:0db8:85a3:0000:0000:8a2e:0370:7334
 			}`,
 			false,
 		},

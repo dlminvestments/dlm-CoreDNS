@@ -31,8 +31,11 @@ ZSK/KSK split. All signing operations are done online.
 Authenticated denial of existence is implemented with NSEC black lies. Using ECDSA as an algorithm
 is preferred as this leads to smaller signatures (compared to RSA). NSEC3 is *not* supported.
 
+As the *dnssec* plugin can't see the original TTL of the RRSets it signs, it will always use 3600s
+as the value.
+
 If multiple *dnssec* plugins are specified in the same zone, the last one specified will be
-used (See [bugs](#bugs)).
+used.
 
 * **ZONES** zones that should be signed. If empty, the zones from the configuration block
     are used.
@@ -53,7 +56,7 @@ used (See [bugs](#bugs)).
 
 If monitoring is enabled (via the *prometheus* plugin) then the following metrics are exported:
 
-* `coredns_dnssec_cache_size{server, type}` - total elements in the cache, type is "signature".
+* `coredns_dnssec_cache_entries{server, type}` - total elements in the cache, type is "signature".
 * `coredns_dnssec_cache_hits_total{server}` - Counter of cache hits.
 * `coredns_dnssec_cache_misses_total{server}` - Counter of cache misses.
 

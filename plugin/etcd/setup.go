@@ -3,13 +3,13 @@ package etcd
 import (
 	"crypto/tls"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	mwtls "github.com/coredns/coredns/plugin/pkg/tls"
 	"github.com/coredns/coredns/plugin/pkg/upstream"
 
-	"github.com/caddyserver/caddy"
-	etcdcv3 "go.etcd.io/etcd/clientv3"
+	etcdcv3 "go.etcd.io/etcd/client/v3"
 )
 
 func init() { plugin.Register("etcd", setup) }
@@ -41,15 +41,7 @@ func etcdParse(c *caddy.Controller) (*Etcd, error) {
 	etc.Upstream = upstream.New()
 
 	for c.Next() {
-		etc.Zones = c.RemainingArgs()
-		if len(etc.Zones) == 0 {
-			etc.Zones = make([]string, len(c.ServerBlockKeys))
-			copy(etc.Zones, c.ServerBlockKeys)
-		}
-		for i, str := range etc.Zones {
-			etc.Zones[i] = plugin.Host(str).Normalize()
-		}
-
+		etc.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 		for c.NextBlock() {
 			switch c.Val() {
 			case "stubzones":

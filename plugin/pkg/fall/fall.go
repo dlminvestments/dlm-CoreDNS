@@ -7,7 +7,7 @@
 //
 // The take away: be mindful of this and don't blindly assume it's a good feature to have in your plugin.
 //
-// See http://github.com/coredns/coredns/issues/2723 for some discussion on this, which includes this quote:
+// See https://github.com/coredns/coredns/issues/2723 for some discussion on this, which includes this quote:
 //
 // TL;DR: `fallthrough` is indeed risky and hackish, but still a good feature of CoreDNS as it allows to quickly answer boring edge cases.
 //
@@ -31,10 +31,11 @@ func (f F) Through(qname string) bool {
 
 // setZones will set zones in f.
 func (f *F) setZones(zones []string) {
+	z := []string{}
 	for i := range zones {
-		zones[i] = plugin.Host(zones[i]).Normalize()
+		z = append(z, plugin.Host(zones[i]).NormalizeExact()...)
 	}
-	f.Zones = zones
+	f.Zones = z
 }
 
 // SetZonesFromArgs sets zones in f to the passed value or to "." if the slice is empty.
@@ -47,7 +48,7 @@ func (f *F) SetZonesFromArgs(zones []string) {
 }
 
 // Equal returns true if f and g are equal.
-func (f F) Equal(g F) bool {
+func (f *F) Equal(g F) bool {
 	if len(f.Zones) != len(g.Zones) {
 		return false
 	}

@@ -7,16 +7,15 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/miekg/dns"
 )
 
 func TestReload(t *testing.T) {
 	corefile := `.:0 {
-	whoami
-}
-`
+		whoami
+	}`
+
 	coreInput := NewInput(corefile)
 
 	c, err := CoreDNSServer(corefile)
@@ -60,11 +59,11 @@ func send(t *testing.T, server string) {
 }
 
 func TestReloadHealth(t *testing.T) {
-	corefile := `
-.:0 {
-	health 127.0.0.1:52182
-	whoami
-}`
+	corefile := `.:0 {
+		health 127.0.0.1:52182
+		whoami
+	}`
+
 	c, err := CoreDNSServer(corefile)
 	if err != nil {
 		if strings.Contains(err.Error(), inUse) {
@@ -81,12 +80,12 @@ func TestReloadHealth(t *testing.T) {
 }
 
 func TestReloadMetricsHealth(t *testing.T) {
-	corefile := `
-.:0 {
-	prometheus 127.0.0.1:53183
-	health 127.0.0.1:53184
-	whoami
-}`
+	corefile := `.:0 {
+		prometheus 127.0.0.1:53183
+		health 127.0.0.1:53184
+		whoami
+	}`
+
 	c, err := CoreDNSServer(corefile)
 	if err != nil {
 		if strings.Contains(err.Error(), inUse) {
@@ -100,8 +99,6 @@ func TestReloadMetricsHealth(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer c1.Stop()
-
-	time.Sleep(1 * time.Second)
 
 	// Health
 	resp, err := http.Get("http://localhost:53184/health")
@@ -154,15 +151,14 @@ func TestReloadSeveralTimeMetrics(t *testing.T) {
 	// that is not used in another test
 	promAddress := "127.0.0.1:53185"
 	proc := "coredns_build_info"
-	corefileWithMetrics := `
-	.:0 {
+	corefileWithMetrics := `.:0 {
 		prometheus ` + promAddress + `
 		whoami
 	}`
-	corefileWithoutMetrics := `
-	.:0 {
+	corefileWithoutMetrics := `.:0 {
 		whoami
 	}`
+
 	if err := collectMetricsInfo(promAddress, proc); err == nil {
 		t.Errorf("Prometheus is listening before the test started")
 	}
@@ -209,16 +205,16 @@ func TestMetricsAvailableAfterReload(t *testing.T) {
 	// that is not used in another test
 	promAddress := "127.0.0.1:53186"
 	procMetric := "coredns_build_info"
-	procCache := "coredns_cache_size"
+	procCache := "coredns_cache_entries"
 	procForward := "coredns_dns_request_duration_seconds"
-	corefileWithMetrics := `
-	.:0 {
+	corefileWithMetrics := `.:0 {
 		prometheus ` + promAddress + `
 		cache
 		forward . 8.8.8.8 {
-           force_tcp
+			force_tcp
 		}
 	}`
+
 	inst, _, tcp, err := CoreDNSServerAndPorts(corefileWithMetrics)
 	if err != nil {
 		if strings.Contains(err.Error(), inUse) {
@@ -263,25 +259,24 @@ func TestMetricsAvailableAfterReloadAndFailedReload(t *testing.T) {
 	// that is not used in another test
 	promAddress := "127.0.0.1:53187"
 	procMetric := "coredns_build_info"
-	procCache := "coredns_cache_size"
+	procCache := "coredns_cache_entries"
 	procForward := "coredns_dns_request_duration_seconds"
-	corefileWithMetrics := `
-	.:0 {
+	corefileWithMetrics := `.:0 {
 		prometheus ` + promAddress + `
 		cache
 		forward . 8.8.8.8 {
-           force_tcp
+			force_tcp
 		}
 	}`
-	invalidCorefileWithMetrics := `
-	.:0 {
+	invalidCorefileWithMetrics := `.:0 {
 		prometheus ` + promAddress + `
 		cache
 		forward . 8.8.8.8 {
-           force_tcp
+			force_tcp
 		}
 		invalid
 	}`
+
 	inst, _, tcp, err := CoreDNSServerAndPorts(corefileWithMetrics)
 	if err != nil {
 		if strings.Contains(err.Error(), inUse) {

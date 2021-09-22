@@ -1,8 +1,9 @@
 module github.com/coredns/coredns
 
-go 1.13
+go 1.16
 
 require (
+traffic
 	cloud.google.com/go v0.41.0 // indirect
 	github.com/Azure/azure-sdk-for-go v32.6.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.9.3
@@ -21,29 +22,42 @@ require (
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/googleapis/gnostic v0.2.0 // indirect
+=======
+	github.com/Azure/azure-sdk-for-go v53.3.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.11.21
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
+	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
+	github.com/Microsoft/go-winio v0.5.0 // indirect
+	github.com/apparentlymart/go-cidr v1.1.0
+	github.com/aws/aws-sdk-go v1.40.45
+	github.com/coredns/caddy v1.1.1
+	github.com/dnstap/golang-dnstap v0.4.0
+	github.com/farsightsec/golang-framestream v0.3.0
+	github.com/golang/protobuf v1.5.2
+ master
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
-	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/infobloxopen/go-trees v0.0.0-20190313150506-2af4e13f9062
+	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/infobloxopen/go-trees v0.0.0-20200715205103-96a057b8dfb9
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
-	github.com/miekg/dns v1.1.27
-	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
-	github.com/opentracing/opentracing-go v1.1.0
-	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5
-	github.com/philhofer/fwd v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.3.0
-	github.com/prometheus/client_model v0.1.0
-	github.com/prometheus/common v0.7.0
-	github.com/tinylib/msgp v1.1.0 // indirect
-	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20190917205325-a14579fbfb1a
-	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
-	golang.org/x/sys v0.0.0-20191220142924-d4481acd189f
-	google.golang.org/api v0.15.0
-	google.golang.org/grpc v1.26.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.20.0
-	k8s.io/api v0.17.0
-	k8s.io/apimachinery v0.17.0
-	k8s.io/client-go v0.17.0
-	k8s.io/klog v1.0.0
+	github.com/miekg/dns v1.1.43
+	github.com/opentracing/opentracing-go v1.2.0
+	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
+	github.com/openzipkin/zipkin-go v0.2.2
+	github.com/oschwald/geoip2-golang v1.5.0
+	github.com/philhofer/fwd v1.1.1 // indirect
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/common v0.30.0
+	github.com/stretchr/objx v0.2.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.0
+	go.etcd.io/etcd/client/v3 v3.5.0
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/sys v0.0.0-20210908233432-aa78b53d3365
+	google.golang.org/api v0.57.0
+	google.golang.org/grpc v1.40.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
+	k8s.io/api v0.22.2
+	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
+	k8s.io/klog/v2 v2.20.0
 )

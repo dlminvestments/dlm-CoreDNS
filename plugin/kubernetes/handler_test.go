@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/coredns/coredns/plugin/kubernetes/object"
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
@@ -373,6 +372,37 @@ var dnsTestCases = []test.Case{
 			test.SOA("cluster.local.	5	IN	SOA	ns.dns.cluster.local. hostmaster.cluster.local. 1499347823 7200 1800 86400 5"),
 		},
 	},
+	// Dual Stack ClusterIP Services
+	{
+		Qname: "svc-dual-stack.testns.svc.cluster.local.", Qtype: dns.TypeA,
+		Rcode: dns.RcodeSuccess,
+		Answer: []dns.RR{
+			test.A("svc-dual-stack.testns.svc.cluster.local.	5	IN	A	10.0.0.3"),
+		},
+	},
+	{
+		Qname: "svc-dual-stack.testns.svc.cluster.local.", Qtype: dns.TypeAAAA,
+		Rcode: dns.RcodeSuccess,
+		Answer: []dns.RR{
+			test.AAAA("svc-dual-stack.testns.svc.cluster.local.	5	IN	AAAA	10::3"),
+		},
+	},
+	{
+		Qname: "svc-dual-stack.testns.svc.cluster.local.", Qtype: dns.TypeSRV,
+		Rcode: dns.RcodeSuccess,
+		Answer: []dns.RR{test.SRV("svc-dual-stack.testns.svc.cluster.local.	5	IN	SRV	0 50 80 svc-dual-stack.testns.svc.cluster.local.")},
+		Extra: []dns.RR{
+			test.A("svc-dual-stack.testns.svc.cluster.local.  5       IN      A       10.0.0.3"),
+			test.AAAA("svc-dual-stack.testns.svc.cluster.local.  5       IN      AAAA       10::3"),
+		},
+	},
+	{
+		Qname: "svc1.testns.svc.cluster.local.", Qtype: dns.TypeSOA,
+		Rcode: dns.RcodeSuccess,
+		Ns: []dns.RR{
+			test.SOA("cluster.local.	5	IN	SOA	ns.dns.cluster.local. hostmaster.cluster.local. 1499347823 7200 1800 86400 5"),
+		},
+	},
 }
 
 func TestServeDNS(t *testing.T) {
@@ -525,7 +555,7 @@ func (APIConnServeTest) Run()                                      {}
 func (APIConnServeTest) Stop() error                               { return nil }
 func (APIConnServeTest) EpIndexReverse(string) []*object.Endpoints { return nil }
 func (APIConnServeTest) SvcIndexReverse(string) []*object.Service  { return nil }
-func (APIConnServeTest) Modified() int64                           { return time.Now().Unix() }
+func (APIConnServeTest) Modified() int64                           { return int64(3) }
 
 func (APIConnServeTest) PodIndex(ip string) []*object.Pod {
 	if ip != "10.240.0.1" {
@@ -538,12 +568,23 @@ func (APIConnServeTest) PodIndex(ip string) []*object.Pod {
 }
 
 var svcIndex = map[string][]*object.Service{
+	"kubedns.kube-system": {
+		{
+			Name:       "kubedns",
+			Namespace:  "kube-system",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"10.0.0.10"},
+			Ports: []api.ServicePort{
+				{Name: "dns", Protocol: "udp", Port: 53},
+			},
+		},
+	},
 	"svc1.testns": {
 		{
-			Name:      "svc1",
-			Namespace: "testns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: "10.0.0.1",
+			Name:       "svc1",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"10.0.0.1"},
 			Ports: []api.ServicePort{
 				{Name: "http", Protocol: "tcp", Port: 80},
 			},
@@ -551,10 +592,10 @@ var svcIndex = map[string][]*object.Service{
 	},
 	"svcempty.testns": {
 		{
-			Name:      "svcempty",
-			Namespace: "testns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: "10.0.0.1",
+			Name:       "svcempty",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"10.0.0.1"},
 			Ports: []api.ServicePort{
 				{Name: "http", Protocol: "tcp", Port: 80},
 			},
@@ -562,10 +603,10 @@ var svcIndex = map[string][]*object.Service{
 	},
 	"svc6.testns": {
 		{
-			Name:      "svc6",
-			Namespace: "testns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: "1234:abcd::1",
+			Name:       "svc6",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"1234:abcd::1"},
 			Ports: []api.ServicePort{
 				{Name: "http", Protocol: "tcp", Port: 80},
 			},
@@ -573,10 +614,10 @@ var svcIndex = map[string][]*object.Service{
 	},
 	"hdls1.testns": {
 		{
-			Name:      "hdls1",
-			Namespace: "testns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: api.ClusterIPNone,
+			Name:       "hdls1",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{api.ClusterIPNone},
 		},
 	},
 	"external.testns": {
@@ -603,19 +644,29 @@ var svcIndex = map[string][]*object.Service{
 	},
 	"hdlsprtls.testns": {
 		{
-			Name:      "hdlsprtls",
-			Namespace: "testns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: api.ClusterIPNone,
+			Name:       "hdlsprtls",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{api.ClusterIPNone},
 		},
 	},
 	"svc1.unexposedns": {
 		{
-			Name:      "svc1",
-			Namespace: "unexposedns",
-			Type:      api.ServiceTypeClusterIP,
-			ClusterIP: "10.0.0.2",
+			Name:       "svc1",
+			Namespace:  "unexposedns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"10.0.0.2"},
 			Ports: []api.ServicePort{
+				{Name: "http", Protocol: "tcp", Port: 80},
+			},
+		},
+	},
+	"svc-dual-stack.testns": {
+		{
+			Name:       "svc-dual-stack",
+			Namespace:  "testns",
+			Type:       api.ServiceTypeClusterIP,
+			ClusterIPs: []string{"10.0.0.3", "10::3"}, Ports: []api.ServicePort{
 				{Name: "http", Protocol: "tcp", Port: 80},
 			},
 		},
@@ -633,6 +684,21 @@ func (APIConnServeTest) ServiceList() []*object.Service {
 }
 
 var epsIndex = map[string][]*object.Endpoints{
+	"kubedns.kube-system": {{
+		Subsets: []object.EndpointSubset{
+			{
+				Addresses: []object.EndpointAddress{
+					{IP: "172.0.0.100"},
+				},
+				Ports: []object.EndpointPort{
+					{Port: 53, Protocol: "udp", Name: "dns"},
+				},
+			},
+		},
+		Name:      "kubedns",
+		Namespace: "kube-system",
+		Index:     object.EndpointsKey("kubedns", "kube-system"),
+	}},
 	"svc1.testns": {{
 		Subsets: []object.EndpointSubset{
 			{
@@ -644,8 +710,9 @@ var epsIndex = map[string][]*object.Endpoints{
 				},
 			},
 		},
-		Name:      "svc1",
+		Name:      "svc1-slice1",
 		Namespace: "testns",
+		Index:     object.EndpointsKey("svc1", "testns"),
 	}},
 	"svcempty.testns": {{
 		Subsets: []object.EndpointSubset{
@@ -656,8 +723,9 @@ var epsIndex = map[string][]*object.Endpoints{
 				},
 			},
 		},
-		Name:      "svcempty",
+		Name:      "svcempty-slice1",
 		Namespace: "testns",
+		Index:     object.EndpointsKey("svcempty", "testns"),
 	}},
 	"hdls1.testns": {{
 		Subsets: []object.EndpointSubset{
@@ -675,8 +743,9 @@ var epsIndex = map[string][]*object.Endpoints{
 				},
 			},
 		},
-		Name:      "hdls1",
+		Name:      "hdls1-slice1",
 		Namespace: "testns",
+		Index:     object.EndpointsKey("hdls1", "testns"),
 	}},
 	"hdlsprtls.testns": {{
 		Subsets: []object.EndpointSubset{
@@ -687,8 +756,9 @@ var epsIndex = map[string][]*object.Endpoints{
 				Ports: []object.EndpointPort{{Port: -1}},
 			},
 		},
-		Name:      "hdlsprtls",
+		Name:      "hdlsprtls-slice1",
 		Namespace: "testns",
+		Index:     object.EndpointsKey("hdlsprtls", "testns"),
 	}},
 }
 
@@ -704,7 +774,7 @@ func (APIConnServeTest) EndpointsList() []*object.Endpoints {
 	return eps
 }
 
-func (APIConnServeTest) GetNodeByName(name string) (*api.Node, error) {
+func (APIConnServeTest) GetNodeByName(ctx context.Context, name string) (*api.Node, error) {
 	return &api.Node{
 		ObjectMeta: meta.ObjectMeta{
 			Name: "test.node.foo.bar",
@@ -712,16 +782,14 @@ func (APIConnServeTest) GetNodeByName(name string) (*api.Node, error) {
 	}, nil
 }
 
-func (APIConnServeTest) GetNamespaceByName(name string) (*api.Namespace, error) {
+func (APIConnServeTest) GetNamespaceByName(name string) (*object.Namespace, error) {
 	if name == "pod-nons" { // handler_pod_verified_test.go uses this for non-existent namespace.
-		return &api.Namespace{}, nil
+		return nil, fmt.Errorf("namespace not found")
 	}
 	if name == "nsnoexist" {
 		return nil, fmt.Errorf("namespace not found")
 	}
-	return &api.Namespace{
-		ObjectMeta: meta.ObjectMeta{
-			Name: name,
-		},
+	return &object.Namespace{
+		Name: name,
 	}, nil
 }
