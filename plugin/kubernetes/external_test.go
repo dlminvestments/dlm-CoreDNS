@@ -11,7 +11,6 @@ import (
 
 	"github.com/miekg/dns"
 	api "k8s.io/api/core/v1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var extCases = []struct {
@@ -91,11 +90,9 @@ func (external) GetNodeByName(ctx context.Context, name string) (*api.Node, erro
 func (external) SvcIndex(s string) []*object.Service                               { return svcIndexExternal[s] }
 func (external) PodIndex(string) []*object.Pod                                     { return nil }
 
-func (external) GetNamespaceByName(name string) (*api.Namespace, error) {
-	return &api.Namespace{
-		ObjectMeta: meta.ObjectMeta{
-			Name: name,
-		},
+func (external) GetNamespaceByName(name string) (*object.Namespace, error) {
+	return &object.Namespace{
+		Name: name,
 	}, nil
 }
 
@@ -105,7 +102,7 @@ var svcIndexExternal = map[string][]*object.Service{
 			Name:        "svc1",
 			Namespace:   "testns",
 			Type:        api.ServiceTypeClusterIP,
-			ClusterIP:   "10.0.0.1",
+			ClusterIPs:  []string{"10.0.0.1"},
 			ExternalIPs: []string{"1.2.3.4"},
 			Ports:       []api.ServicePort{{Name: "http", Protocol: "tcp", Port: 80}},
 		},
@@ -115,7 +112,7 @@ var svcIndexExternal = map[string][]*object.Service{
 			Name:        "svc6",
 			Namespace:   "testns",
 			Type:        api.ServiceTypeClusterIP,
-			ClusterIP:   "10.0.0.3",
+			ClusterIPs:  []string{"10.0.0.3"},
 			ExternalIPs: []string{"1:2::5"},
 			Ports:       []api.ServicePort{{Name: "http", Protocol: "tcp", Port: 80}},
 		},

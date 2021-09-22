@@ -27,7 +27,7 @@ Currently CoreDNS is able to:
 * Retrieve zone data from primaries, i.e., act as a secondary server (AXFR only) (*secondary*).
 * Sign zone data on-the-fly (*dnssec*).
 * Load balancing of responses (*loadbalance*).
-* Allow for zone transfers, i.e., act as a primary server (*file*).
+* Allow for zone transfers, i.e., act as a primary server (*file* + *transfer*).
 * Automatically load zone files from disk (*auto*).
 * Caching of DNS responses (*cache*).
 * Use etcd as a backend (replacing [SkyDNS](https://github.com/skynetservices/skydns)) (*etcd*).
@@ -70,7 +70,7 @@ CoreDNS requires Go to compile. However, if you already have docker installed an
 setup a Go environment, you could build CoreDNS easily:
 
 ```
-$ docker run --rm -i -t -v $PWD:/v -w /v golang:1.14 make
+$ docker run --rm -i -t -v $PWD:/v -w /v golang:1.16 make
 ```
 
 The above command alone will have `coredns` binary generated.
@@ -137,9 +137,9 @@ send notifies to it.
 
 ~~~ txt
 example.org:1053 {
-    file /var/lib/coredns/example.org.signed {
-        transfer to *
-        transfer to 2001:500:8f::53
+    file /var/lib/coredns/example.org.signed
+    transfer {
+        to * 2001:500:8f::53
     }
     errors
     log
@@ -151,9 +151,9 @@ recursive nameserver *and* rewrite ANY queries to HINFO.
 
 ~~~ txt
 example.org:1053 {
-    file /var/lib/coredns/example.org.signed {
-        transfer to *
-        transfer to 2001:500:8f::53
+    file /var/lib/coredns/example.org.signed
+    transfer {
+        to * 2001:500:8f::53
     }
     errors
     log
@@ -195,13 +195,16 @@ And for DNS over HTTP/2 (DoH) use:
 ~~~ corefile
 https://example.org {
     whoami
+    tls mycert mykey
 }
 ~~~
+
+Note that you must have the *tls* plugin configured as DoH requires that to be setup.
 
 Specifying ports works in the same way:
 
 ~~~ txt
-grpc://example.org:1443 {
+grpc://example.org:1443 https://example.org:1444 {
     # ...
 }
 ~~~

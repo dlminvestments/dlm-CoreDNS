@@ -4,9 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/plugin/pkg/response"
-
-	"github.com/caddyserver/caddy"
 )
 
 func TestLogParse(t *testing.T) {
@@ -163,5 +162,4 @@ func TestLogParse(t *testing.T) {
 			}
 		}
 	}
-
 }

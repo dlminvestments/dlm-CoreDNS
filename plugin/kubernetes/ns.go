@@ -4,9 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/coredns/coredns/plugin/kubernetes/object"
 	"github.com/miekg/dns"
-	api "k8s.io/api/core/v1"
 )
 
 func isDefaultNS(name, zone string) bool {
@@ -27,7 +25,7 @@ func (k *Kubernetes) nsAddrs(external bool, zone string) []dns.RR {
 
 		// Collect IPs for all Services of the Endpoints
 		for _, endpoint := range endpoints {
-			svcs := k.APIConn.SvcIndex(object.ServiceKey(endpoint.Name, endpoint.Namespace))
+			svcs := k.APIConn.SvcIndex(endpoint.Index)
 			for _, svc := range svcs {
 				if external {
 					svcName := strings.Join([]string{svc.Name, svc.Namespace, zone}, ".")
@@ -38,7 +36,7 @@ func (k *Kubernetes) nsAddrs(external bool, zone string) []dns.RR {
 					continue
 				}
 				svcName := strings.Join([]string{svc.Name, svc.Namespace, Svc, zone}, ".")
-				if svc.ClusterIP == api.ClusterIPNone {
+				if svc.Headless() {
 					// For a headless service, use the endpoints IPs
 					for _, s := range endpoint.Subsets {
 						for _, a := range s.Addresses {
@@ -47,8 +45,10 @@ func (k *Kubernetes) nsAddrs(external bool, zone string) []dns.RR {
 						}
 					}
 				} else {
-					svcNames = append(svcNames, svcName)
-					svcIPs = append(svcIPs, net.ParseIP(svc.ClusterIP))
+					for _, clusterIP := range svc.ClusterIPs {
+						svcNames = append(svcNames, svcName)
+						svcIPs = append(svcIPs, net.ParseIP(clusterIP))
+					}
 				}
 			}
 		}

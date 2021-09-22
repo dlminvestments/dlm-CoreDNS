@@ -3,11 +3,10 @@ package autopath
 import (
 	"fmt"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/metrics"
 
-	"github.com/caddyserver/caddy"
 	"github.com/miekg/dns"
 )
 
@@ -18,11 +17,6 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error("autopath", err)
 	}
-
-	c.OnStartup(func() error {
-		metrics.MustRegister(c, autoPathCount)
-		return nil
-	})
 
 	// Do this in OnStartup, so all plugin has been initialized.
 	c.OnStartup(func() error {
@@ -68,14 +62,8 @@ func autoPathParse(c *caddy.Controller) (*AutoPath, string, error) {
 			plugin.Zones(ap.search).Normalize()
 			ap.search = append(ap.search, "") // sentinel value as demanded.
 		}
-		ap.Zones = zoneAndresolv[:len(zoneAndresolv)-1]
-		if len(ap.Zones) == 0 {
-			ap.Zones = make([]string, len(c.ServerBlockKeys))
-			copy(ap.Zones, c.ServerBlockKeys)
-		}
-		for i, str := range ap.Zones {
-			ap.Zones[i] = plugin.Host(str).Normalize()
-		}
+		zones := zoneAndresolv[:len(zoneAndresolv)-1]
+		ap.Zones = plugin.OriginsFromArgsOrServerBlock(zones, c.ServerBlockKeys)
 	}
 	return ap, mw, nil
 }

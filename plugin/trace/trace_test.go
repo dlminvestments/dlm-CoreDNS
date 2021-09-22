@@ -2,14 +2,16 @@ package trace
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/coredns/caddy"
+	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/pkg/rcode"
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/coredns/coredns/request"
 
-	"github.com/caddyserver/caddy"
 	"github.com/miekg/dns"
 	"github.com/opentracing/opentracing-go/mocktracer"
 )
@@ -28,6 +30,11 @@ func TestStartup(t *testing.T) {
 		t.Errorf("Error starting tracing plugin: %s", err)
 		return
 	}
+
+	if m.tagSet != tagByProvider["default"] {
+		t.Errorf("TagSet by proviser hasn't been corectly initialized")
+	}
+
 	if m.Tracer() == nil {
 		t.Errorf("Error, no tracer created")
 	}
@@ -37,37 +44,57 @@ func TestTrace(t *testing.T) {
 	cases := []struct {
 		name     string
 		rcode    int
+		status   int
 		question *dns.Msg
-		server   string
+		err      error
 	}{
 		{
 			name:     "NXDOMAIN",
 			rcode:    dns.RcodeNameError,
+			status:   dns.RcodeSuccess,
 			question: new(dns.Msg).SetQuestion("example.org.", dns.TypeA),
 		},
 		{
 			name:     "NOERROR",
 			rcode:    dns.RcodeSuccess,
+			status:   dns.RcodeSuccess,
 			question: new(dns.Msg).SetQuestion("example.net.", dns.TypeCNAME),
 		},
+		{
+			name:     "SERVFAIL",
+			rcode:    dns.RcodeServerFailure,
+			status:   dns.RcodeSuccess,
+			question: new(dns.Msg).SetQuestion("example.net.", dns.TypeA),
+			err:      errors.New("test error"),
+		},
+		{
+			name:     "No response written",
+			rcode:    dns.RcodeServerFailure,
+			status:   dns.RcodeServerFailure,
+			question: new(dns.Msg).SetQuestion("example.net.", dns.TypeA),
+			err:      errors.New("test error"),
+		},
 	}
-
+	defaultTagSet := tagByProvider["default"]
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			w := dnstest.NewRecorder(&test.ResponseWriter{})
 			m := mocktracer.New()
 			tr := &trace{
 				Next: test.HandlerFunc(func(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-					m := new(dns.Msg)
-					m.SetRcode(r, tc.rcode)
-					w.WriteMsg(m)
-					return tc.rcode, nil
+					if plugin.ClientWrite(tc.status) {
+						m := new(dns.Msg)
+						m.SetRcode(r, tc.rcode)
+						w.WriteMsg(m)
+					}
+					return tc.status, tc.err
 				}),
 				every:  1,
 				tracer: m,
+				tagSet: defaultTagSet,
 			}
 			ctx := context.TODO()
-			if _, err := tr.ServeDNS(ctx, w, tc.question); err != nil {
+			if _, err := tr.ServeDNS(ctx, w, tc.question); err != nil && tc.err == nil {
 				t.Fatalf("Error during tr.ServeDNS(ctx, w, %v): %v", tc.question, err)
 			}
 
@@ -79,17 +106,27 @@ func TestTrace(t *testing.T) {
 
 			rootSpan := fs[1]
 			req := request.Request{W: w, Req: tc.question}
-			if rootSpan.OperationName != spanName(ctx, req) {
-				t.Errorf("Unexpected span name: rootSpan.Name: want %v, got %v", spanName(ctx, req), rootSpan.OperationName)
+			if rootSpan.OperationName != defaultTopLevelSpanName {
+				t.Errorf("Unexpected span name: rootSpan.Name: want %v, got %v", defaultTopLevelSpanName, rootSpan.OperationName)
 			}
-			if rootSpan.Tag(tagName) != req.Name() {
-				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", tagName, req.Name(), rootSpan.Tag(tagName))
+
+			if rootSpan.Tag(defaultTagSet.Name) != req.Name() {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", defaultTagSet.Name, req.Name(), rootSpan.Tag(defaultTagSet.Name))
 			}
-			if rootSpan.Tag(tagType) != req.Type() {
-				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", tagType, req.Type(), rootSpan.Tag(tagType))
+			if rootSpan.Tag(defaultTagSet.Type) != req.Type() {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", defaultTagSet.Type, req.Type(), rootSpan.Tag(defaultTagSet.Type))
 			}
-			if rootSpan.Tag(tagRcode) != rcode.ToString(tc.rcode) {
-				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", tagRcode, rcode.ToString(tc.rcode), rootSpan.Tag(tagRcode))
+			if rootSpan.Tag(defaultTagSet.Proto) != req.Proto() {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", defaultTagSet.Proto, req.Proto(), rootSpan.Tag(defaultTagSet.Proto))
+			}
+			if rootSpan.Tag(defaultTagSet.Remote) != req.IP() {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", defaultTagSet.Remote, req.IP(), rootSpan.Tag(defaultTagSet.Remote))
+			}
+			if rootSpan.Tag(defaultTagSet.Rcode) != rcode.ToString(tc.rcode) {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", defaultTagSet.Rcode, rcode.ToString(tc.rcode), rootSpan.Tag(defaultTagSet.Rcode))
+			}
+			if tc.err != nil && rootSpan.Tag("error") != true {
+				t.Errorf("Unexpected span tag: rootSpan.Tag(%v): want %v, got %v", "error", true, rootSpan.Tag("error"))
 			}
 		})
 	}

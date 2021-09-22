@@ -3,78 +3,17 @@ package test
 // These tests check for meta level items, like trailing whitespace, correct file naming etc.
 
 import (
-	"bufio"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"unicode"
 )
-
-func TestTrailingWhitespace(t *testing.T) {
-	walker := hasTrailingWhitespaceWalker{}
-	err := filepath.Walk("..", walker.walk)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(walker.Errors) > 0 {
-		for _, err = range walker.Errors {
-			t.Error(err)
-		}
-	}
-}
-
-type hasTrailingWhitespaceWalker struct {
-	Errors []error
-}
-
-func (w *hasTrailingWhitespaceWalker) walk(path string, info os.FileInfo, _ error) error {
-	// Only handle regular files, skip files that are executable and skip file in the
-	// root that start with a .
-	if !info.Mode().IsRegular() {
-		return nil
-	}
-	if info.Mode().Perm()&0111 != 0 {
-		return nil
-	}
-	if strings.HasPrefix(path, "../.") {
-		return nil
-	}
-	if strings.Contains(path, "/vendor") {
-		return nil
-	}
-
-	file, err := os.Open(path)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for i := 1; scanner.Scan(); i++ {
-		text := scanner.Text()
-		trimmed := strings.TrimRightFunc(text, unicode.IsSpace)
-		if len(text) != len(trimmed) {
-			absPath, _ := filepath.Abs(path)
-			w.Errors = append(w.Errors, fmt.Errorf("file %q has trailing whitespace at line %d, text: %q", absPath, i, text))
-		}
-	}
-
-	err = scanner.Err()
-
-	if err != nil {
-		absPath, _ := filepath.Abs(path)
-		err = fmt.Errorf("file %q: %v", absPath, err)
-	}
-
-	return err
-}
 
 func TestFileNameHyphen(t *testing.T) {
 	walker := hasHyphenWalker{}
@@ -344,7 +283,7 @@ func (w *testImportOrderingWalker) walk(path string, info os.FileInfo, _ error) 
 		prevpos = line
 	}
 	// if it:
-	// contains strings github.com/coredns/coredns -> coredns
+	// contains strings github.com/coredns -> coredns
 	// contains dots -> 3rd
 	// no dots -> std
 	ip := [3]string{} // type per block, just string, either std, coredns, 3rd
@@ -354,7 +293,7 @@ func (w *testImportOrderingWalker) walk(path string, info os.FileInfo, _ error) 
 
 	// Ok, now that we have the type, let's see if all members adhere to it.
 	// After that we check if the are in the right order.
-	for i := 0; i < bl; i++ {
+	for i := 0; i <= bl; i++ {
 		for _, p := range blocks[i] {
 			t := importtype(p.Path.Value)
 			if t != ip[i] {
@@ -392,11 +331,29 @@ func (w *testImportOrderingWalker) walk(path string, info os.FileInfo, _ error) 
 }
 
 func importtype(s string) string {
-	if strings.Contains(s, "github.com/coredns/coredns") {
+	if strings.Contains(s, "github.com/coredns") {
 		return "coredns"
 	}
 	if strings.Contains(s, ".") {
 		return "3rd"
 	}
 	return "std"
+}
+
+// TestMetricNaming tests the imports path used for metrics. It depends on faillint to be installed: go install github.com/fatih/faillint
+func TestPrometheusImports(t *testing.T) {
+	if _, err := exec.LookPath("faillint"); err != nil {
+		fmt.Fprintf(os.Stderr, "Not executing TestPrometheusImports: faillint not found\n")
+		return
+	}
+
+	// make this multiline?
+	p := `github.com/prometheus/client_golang/prometheus.{NewCounter,NewCounterVec,NewCounterVec,NewGauge,NewGaugeVec,NewGaugeFunc,NewHistorgram,NewHistogramVec,NewSummary,NewSummaryVec}=github.com/prometheus/client_golang/prometheus/promauto.{NewCounter,NewCounterVec,NewCounterVec,NewGauge,NewGaugeVec,NewGaugeFunc,NewHistorgram,NewHistogramVec,NewSummary,NewSummaryVec}`
+
+	cmd := exec.Command("faillint", "-paths", p, "./...")
+	cmd.Dir = ".."
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed: %s\n%s", err, out)
+	}
 }

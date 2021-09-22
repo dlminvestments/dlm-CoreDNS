@@ -10,9 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
-
-	"github.com/caddyserver/caddy"
 )
 
 // As we use the filesystem as-is, these files need to exist ON DISK for the readme test to work. This is especially
@@ -142,6 +141,10 @@ func sectionsFromReadme(readme string) error {
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		line := s.Text()
+		if strings.HasPrefix(line, "## Also See") {
+			return fmt.Errorf("Please use %q instead of %q", "See Also", "Also See")
+		}
+
 		switch section {
 		case 0:
 			if strings.HasPrefix(line, "## Name") {

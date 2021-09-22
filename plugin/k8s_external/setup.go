@@ -3,11 +3,10 @@ package external
 import (
 	"strconv"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/upstream"
-
-	"github.com/caddyserver/caddy"
 )
 
 func init() { plugin.Register("k8s_external", setup) }
@@ -45,15 +44,7 @@ func parse(c *caddy.Controller) (*External, error) {
 	e := New()
 
 	for c.Next() { // external
-		zones := c.RemainingArgs()
-		e.Zones = zones
-		if len(zones) == 0 {
-			e.Zones = make([]string, len(c.ServerBlockKeys))
-			copy(e.Zones, c.ServerBlockKeys)
-		}
-		for i, str := range e.Zones {
-			e.Zones[i] = plugin.Host(str).Normalize()
-		}
+		e.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 		for c.NextBlock() {
 			switch c.Val() {
 			case "ttl":

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/pkg/fall"
@@ -13,7 +14,6 @@ import (
 	privateAzureDNS "github.com/Azure/azure-sdk-for-go/profiles/latest/privatedns/mgmt/privatedns"
 	azurerest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
-	"github.com/caddyserver/caddy"
 )
 
 var log = clog.NewWithPlugin("azure")
@@ -25,7 +25,7 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error("azure", err)
 	}
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	publicDNSClient := publicAzureDNS.NewRecordSetsClient(env.Values[auth.SubscriptionID])
 	if publicDNSClient.Authorizer, err = env.GetAuthorizer(); err != nil {
@@ -50,6 +50,7 @@ func setup(c *caddy.Controller) error {
 		h.Next = next
 		return h
 	})
+	c.OnShutdown(func() error { cancel(); return nil })
 	return nil
 }
 

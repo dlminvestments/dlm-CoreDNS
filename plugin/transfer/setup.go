@@ -1,12 +1,11 @@
 package transfer
 
 import (
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	parsepkg "github.com/coredns/coredns/plugin/pkg/parse"
+	"github.com/coredns/coredns/plugin/pkg/parse"
 	"github.com/coredns/coredns/plugin/pkg/transport"
-
-	"github.com/caddyserver/caddy"
 )
 
 func init() {
@@ -17,7 +16,7 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
-	t, err := parse(c)
+	t, err := parseTransfer(c)
 
 	if err != nil {
 		return plugin.Error("transfer", err)
@@ -44,33 +43,11 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
-func parse(c *caddy.Controller) (*Transfer, error) {
-
+func parseTransfer(c *caddy.Controller) (*Transfer, error) {
 	t := &Transfer{}
 	for c.Next() {
 		x := &xfr{}
-		zones := c.RemainingArgs()
-
-		if len(zones) != 0 {
-			x.Zones = zones
-			for i := 0; i < len(x.Zones); i++ {
-				nzone, err := plugin.Host(x.Zones[i]).MustNormalize()
-				if err != nil {
-					return nil, err
-				}
-				x.Zones[i] = nzone
-			}
-		} else {
-			x.Zones = make([]string, len(c.ServerBlockKeys))
-			for i := 0; i < len(c.ServerBlockKeys); i++ {
-				nzone, err := plugin.Host(c.ServerBlockKeys[i]).MustNormalize()
-				if err != nil {
-					return nil, err
-				}
-				x.Zones[i] = nzone
-			}
-		}
-
+		x.Zones = plugin.OriginsFromArgsOrServerBlock(c.RemainingArgs(), c.ServerBlockKeys)
 		for c.NextBlock() {
 			switch c.Val() {
 			case "to":
@@ -83,14 +60,14 @@ func parse(c *caddy.Controller) (*Transfer, error) {
 						x.to = append(x.to, host)
 						continue
 					}
-					normalized, err := parsepkg.HostPort(host, transport.Port)
+					normalized, err := parse.HostPort(host, transport.Port)
 					if err != nil {
 						return nil, err
 					}
 					x.to = append(x.to, normalized)
 				}
 			default:
-				return nil, plugin.Error("transfer", c.Errf("unknown property '%s'", c.Val()))
+				return nil, plugin.Error("transfer", c.Errf("unknown property %q", c.Val()))
 			}
 		}
 		if len(x.to) == 0 {

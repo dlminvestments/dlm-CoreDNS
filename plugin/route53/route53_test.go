@@ -37,7 +37,7 @@ func (fakeRoute53) ListResourceRecordSetsPagesWithContext(_ aws.Context, in *rou
 	}{
 		{"A", "example.org.", "1.2.3.4", "1234567890"},
 		{"A", "www.example.org", "1.2.3.4", "1234567890"},
-		{"CNAME", `\\052.www.example.org`, "www.example.org", "1234567890"},
+		{"CNAME", `\052.www.example.org`, "www.example.org", "1234567890"},
 		{"AAAA", "example.org.", "2001:db8:85a3::8a2e:370:7334", "1234567890"},
 		{"CNAME", "sample.example.org.", "example.org", "1234567890"},
 		{"PTR", "example.org.", "ptr.example.org.", "1234567890"},
@@ -81,7 +81,7 @@ func TestRoute53(t *testing.T) {
 
 	r, err := New(ctx, fakeRoute53{}, map[string][]string{"bad.": {"0987654321"}}, time.Minute)
 	if err != nil {
-		t.Fatalf("Failed to create Route53: %v", err)
+		t.Fatalf("Failed to create route53: %v", err)
 	}
 	if err = r.Run(ctx); err == nil {
 		t.Fatalf("Expected errors for zone bad.")
@@ -89,7 +89,7 @@ func TestRoute53(t *testing.T) {
 
 	r, err = New(ctx, fakeRoute53{}, map[string][]string{"org.": {"1357986420", "1234567890"}, "gov.": {"Z098765432", "1234567890"}}, 90*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to create Route53: %v", err)
+		t.Fatalf("Failed to create route53: %v", err)
 	}
 	r.Fall = fall.Zero
 	r.Fall.SetZonesFromArgs([]string{"gov."})
@@ -117,7 +117,7 @@ func TestRoute53(t *testing.T) {
 	})
 	err = r.Run(ctx)
 	if err != nil {
-		t.Fatalf("Failed to initialize Route53: %v", err)
+		t.Fatalf("Failed to initialize route53: %v", err)
 	}
 
 	tests := []struct {
@@ -275,17 +275,17 @@ func TestMaybeUnescape(t *testing.T) {
 		// 1. non-escaped sequence.
 		{escaped: "example.com.", want: "example.com."},
 		// 2. escaped `*` as first label - OK.
-		{escaped: `\\052.example.com`, want: "*.example.com"},
+		{escaped: `\052.example.com`, want: "*.example.com"},
 		// 3. Escaped dot, 'a' and a hyphen. No idea why but we'll allow it.
-		{escaped: `weird\\055ex\\141mple\\056com\\056\\056`, want: "weird-example.com.."},
+		{escaped: `weird\055ex\141mple\056com\056\056`, want: "weird-example.com.."},
 		// 4. escaped `*` in the middle - NOT OK.
-		{escaped: `e\\052ample.com`, wantErr: errors.New("`*' only supported as wildcard (leftmost label)")},
+		{escaped: `e\052ample.com`, wantErr: errors.New("`*' only supported as wildcard (leftmost label)")},
 		// 5. Invalid character.
-		{escaped: `\\000.example.com`, wantErr: errors.New(`invalid character: \\000`)},
+		{escaped: `\000.example.com`, wantErr: errors.New(`invalid character: \000`)},
 		// 6. Invalid escape sequence in the middle.
-		{escaped: `example\\0com`, wantErr: errors.New(`invalid escape sequence: '\\0co'`)},
+		{escaped: `example\0com`, wantErr: errors.New(`invalid escape sequence: '\0co'`)},
 		// 7. Invalid escape sequence at the end.
-		{escaped: `example.com\\0`, wantErr: errors.New(`invalid escape sequence: '\\0'`)},
+		{escaped: `example.com\0`, wantErr: errors.New(`invalid escape sequence: '\0'`)},
 	} {
 		got, gotErr := maybeUnescape(tc.escaped)
 		if tc.wantErr != gotErr && !reflect.DeepEqual(tc.wantErr, gotErr) {
