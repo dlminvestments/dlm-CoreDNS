@@ -11,7 +11,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.0
 	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
-	github.com/anacrolix/torrent v1.0.0
+	github.com/anacrolix/torrent v1.31.0
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.40.47
 	github.com/caddyserver/caddy v1.0.5
