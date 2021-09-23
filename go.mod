@@ -17,7 +17,7 @@ require (
 	github.com/caddyserver/caddy v1.0.5
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/cenkalti/rain v1.4.4
-	github.com/dnstap/golang-dnstap v0.2.0
+	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.0.0-20190425193708-fa4b164d59b8
 	github.com/golang/protobuf v1.4.2
 	github.com/gophercloud/gophercloud v0.9.0 // indirect
@@ -48,7 +48,7 @@ master
 	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
-	github.com/dnstap/golang-dnstap v0.0.0-20170829151710-2cf77a2b5e11
+	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/envoyproxy/go-control-plane v0.9.3-0.20200130194102-ccc9f873c822
 	github.com/farsightsec/golang-framestream v0.0.0-20181102145529-8a0cb8ba8710
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
