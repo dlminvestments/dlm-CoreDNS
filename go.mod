@@ -39,7 +39,7 @@ traffic
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.28.0
-	github.com/caddyserver/caddy v1.0.4
+	github.com/caddyserver/caddy v1.0.5
 	github.com/coredns/federation v0.0.0-20190818181423-e032b096babe
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
