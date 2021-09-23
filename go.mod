@@ -19,7 +19,7 @@ require (
 	github.com/cenkalti/rain v1.4.4
 	github.com/dnstap/golang-dnstap v0.2.0
 	github.com/farsightsec/golang-framestream v0.0.0-20190425193708-fa4b164d59b8
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.5.2
 	github.com/gophercloud/gophercloud v0.9.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -52,7 +52,7 @@ master
 	github.com/envoyproxy/go-control-plane v0.9.3-0.20200130194102-ccc9f873c822
 	github.com/farsightsec/golang-framestream v0.0.0-20181102145529-8a0cb8ba8710
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.2
 	github.com/googleapis/gnostic v0.2.0 // indirect
 master
 =======
