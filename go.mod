@@ -3,7 +3,35 @@ module github.com/coredns/coredns
 go 1.16
 
 require (
+traffic
+traffic
+traffic
+	cloud.google.com/go v0.41.0 // indirect
+	github.com/Azure/azure-sdk-for-go v32.6.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.9.3
+	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2
+	github.com/DataDog/datadog-go v3.3.1+incompatible // indirect
+	github.com/Shopify/sarama v1.21.0 // indirect
+	github.com/apache/thrift v0.13.0 // indirect
+	github.com/aws/aws-sdk-go v1.28.0
+	github.com/caddyserver/caddy v1.0.4
+	github.com/coredns/federation v0.0.0-20190818181423-e032b096babe
+	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
+	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
+	github.com/dnstap/golang-dnstap v0.0.0-20170829151710-2cf77a2b5e11
+	github.com/envoyproxy/go-control-plane v0.9.3-0.20200130194102-ccc9f873c822
+	github.com/farsightsec/golang-framestream v0.0.0-20181102145529-8a0cb8ba8710
+	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
+	github.com/golang/protobuf v1.3.2
+	github.com/googleapis/gnostic v0.2.0 // indirect
+=======
+	github.com/Azure/azure-sdk-for-go v53.3.0+incompatible
+=======
+	github.com/Azure/azure-sdk-for-go v53.4.0+incompatible
+master
+=======
 	github.com/Azure/azure-sdk-for-go/v57 v57.3.0
+master
 	github.com/Azure/go-autorest/autorest v0.11.21
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
@@ -14,6 +42,7 @@ require (
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/golang/protobuf v1.5.2
+ master
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/infobloxopen/go-trees v0.0.0-20200715205103-96a057b8dfb9
