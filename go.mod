@@ -13,7 +13,7 @@ require (
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/anacrolix/torrent v1.0.0
 	github.com/apache/thrift v0.13.0 // indirect
-	github.com/aws/aws-sdk-go v1.33.7
+	github.com/aws/aws-sdk-go v1.40.47
 	github.com/caddyserver/caddy v1.0.5
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/cenkalti/rain v1.4.4
@@ -39,7 +39,7 @@ traffic
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
-	github.com/aws/aws-sdk-go v1.28.0
+	github.com/aws/aws-sdk-go v1.40.47
 	github.com/caddyserver/caddy v1.0.5
 =======
 	github.com/aws/aws-sdk-go v1.40.47
