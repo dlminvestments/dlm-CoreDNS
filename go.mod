@@ -98,7 +98,7 @@ master
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sys b8560ed6a9b7
-	google.golang.org/api v0.29.0
+	google.golang.org/api v0.57.0
 	google.golang.org/grpc v1.29.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.25.0
 	k8s.io/api v0.22.2
