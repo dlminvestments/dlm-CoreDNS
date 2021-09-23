@@ -45,7 +45,7 @@ renovate/github.com-caddyserver-caddy-1.x
 	github.com/aws/aws-sdk-go v1.40.47
 	github.com/caddyserver/caddy v1.0.4
 master
-	github.com/coredns/federation v0.0.0-20190818181423-e032b096babe
+	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/dnstap/golang-dnstap v0.0.0-20170829151710-2cf77a2b5e11
