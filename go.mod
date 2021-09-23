@@ -102,9 +102,15 @@ master
 	google.golang.org/grpc v1.29.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.25.0
 	k8s.io/api v0.22.2
+renovate/k8s.io-klog-2.x
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v0.22.2
 	k8s.io/klog/v2 v2.20.0
+=======
+	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go/v12 v12.0.0
+	k8s.io/klog v1.0.0
+ master
 =======
 	github.com/prometheus/common v0.30.0
 	github.com/stretchr/objx v0.2.0 // indirect
