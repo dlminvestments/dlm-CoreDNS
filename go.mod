@@ -38,8 +38,13 @@ traffic
 	github.com/DataDog/datadog-go v3.3.1+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
+renovate/github.com-caddyserver-caddy-1.x
 	github.com/aws/aws-sdk-go v1.28.0
 	github.com/caddyserver/caddy v1.0.5
+=======
+	github.com/aws/aws-sdk-go v1.40.47
+	github.com/caddyserver/caddy v1.0.4
+master
 	github.com/coredns/federation v0.0.0-20190818181423-e032b096babe
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
@@ -66,7 +71,7 @@ master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go v1.40.46
+	github.com/aws/aws-sdk-go v1.40.47
 	github.com/coredns/caddy/v2 v2.1.1
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
