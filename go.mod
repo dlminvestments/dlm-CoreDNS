@@ -56,7 +56,7 @@ master
 	github.com/googleapis/gnostic v0.2.0 // indirect
 master
 =======
-	github.com/Azure/azure-sdk-for-go v53.3.0+incompatible
+	github.com/Azure/azure-sdk-for-go v53.4.0+incompatible
 =======
 	github.com/Azure/azure-sdk-for-go v53.4.0+incompatible
 master
