@@ -20,7 +20,6 @@ var Directives = []string{
 	"root",
 	"bind",
 	"debug",
-	"trace",
 	"ready",
 	"health",
 	"pprof",
@@ -33,6 +32,7 @@ var Directives = []string{
 	"acl",
 	"any",
 	"chaos",
+	"traffic",
 	"loadbalance",
 	"cache",
 	"rewrite",
@@ -43,10 +43,13 @@ var Directives = []string{
 	"template",
 	"transfer",
 	"hosts",
+traffic
+=======
 	"route53",
 	"azure",
 	"clouddns",
 	"k8s_external",
+master
 	"kubernetes",
 	"file",
 	"auto",
