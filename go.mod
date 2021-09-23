@@ -6,7 +6,7 @@ require (
  torrent
  torrent
  torrent
-	github.com/Azure/azure-sdk-for-go v40.6.0+incompatible
+	github.com/Azure/azure-sdk-for-go/v57 v57.4.0
 	github.com/Azure/go-autorest/autorest v0.11.2
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.0
 	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
@@ -32,7 +32,7 @@ traffic
 traffic
 traffic
 	cloud.google.com/go v0.41.0 // indirect
-	github.com/Azure/azure-sdk-for-go v32.6.0+incompatible
+	github.com/Azure/azure-sdk-for-go/v57 v57.4.0
 	github.com/Azure/go-autorest/autorest v0.9.3
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2
 	github.com/DataDog/datadog-go v3.3.1+incompatible // indirect
@@ -56,9 +56,9 @@ master
 	github.com/googleapis/gnostic v0.2.0 // indirect
 master
 =======
-	github.com/Azure/azure-sdk-for-go v53.3.0+incompatible
+	github.com/Azure/azure-sdk-for-go/v57 v57.4.0
 =======
-	github.com/Azure/azure-sdk-for-go v53.4.0+incompatible
+	github.com/Azure/azure-sdk-for-go/v57 v57.4.0
 master
  torrent
 =======
