@@ -63,7 +63,7 @@ master
  torrent
 =======
 =======
-	github.com/Azure/azure-sdk-for-go/v57 v57.3.0
+	github.com/Azure/azure-sdk-for-go/v57 v57.4.0
 master
 master
 	github.com/Azure/go-autorest/autorest v0.11.21
