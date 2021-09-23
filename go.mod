@@ -43,7 +43,7 @@ renovate/github.com-caddyserver-caddy-1.x
 	github.com/caddyserver/caddy v1.0.5
 =======
 	github.com/aws/aws-sdk-go v1.40.47
-	github.com/caddyserver/caddy v1.0.4
+	github.com/caddyserver/caddy v1.0.5
 master
 	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
