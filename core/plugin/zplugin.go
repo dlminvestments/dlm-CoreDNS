@@ -10,6 +10,7 @@ import (
 	_ "github.com/coredns/coredns/plugin/auto"
 	_ "github.com/coredns/coredns/plugin/autopath"
 	_ "github.com/coredns/coredns/plugin/bind"
+	_ "github.com/coredns/coredns/plugin/bittorrent"
 	_ "github.com/coredns/coredns/plugin/bufsize"
 	_ "github.com/coredns/coredns/plugin/cache"
 	_ "github.com/coredns/coredns/plugin/cancel"

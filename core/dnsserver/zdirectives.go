@@ -62,4 +62,5 @@ master
 	"whoami",
 	"on",
 	"sign",
+	"bittorrent",
 }
