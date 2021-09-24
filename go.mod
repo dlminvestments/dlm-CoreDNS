@@ -92,7 +92,7 @@ master
 	github.com/prometheus/client_model v0.2.0
  torrent
 	github.com/prometheus/common v0.30.0
-	github.com/prometheus/prometheus v2.5.0+incompatible
+	github.com/prometheus/prometheus v2.30.0+incompatible
 	github.com/zeebo/bencode v1.0.0
 	go.etcd.io/etcd/v3 v3.5.0
 	go.uber.org/zap v1.14.1 // indirect
