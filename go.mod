@@ -14,7 +14,7 @@ require (
 	github.com/anacrolix/torrent v1.31.0
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.40.48
-	github.com/caddyserver/caddy v1.0.5
+	github.com/caddyserver/caddy/v2 v2.4.5
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/cenkalti/rain v1.7.0
 	github.com/dnstap/golang-dnstap v0.4.0
@@ -40,10 +40,10 @@ traffic
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
 	github.com/aws/aws-sdk-go v1.40.48
-	github.com/caddyserver/caddy v1.0.5
+	github.com/caddyserver/caddy/v2 v2.4.5
 =======
 	github.com/aws/aws-sdk-go v1.40.48
-	github.com/caddyserver/caddy v1.0.5
+	github.com/caddyserver/caddy/v2 v2.4.5
 master
 	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
