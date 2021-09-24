@@ -99,8 +99,13 @@ master
 	golang.org/x/crypto 089bfa567519
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.57.0
+ renovate/google.golang.org-grpc-1.x
 	google.golang.org/grpc v1.40.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.25.0
+=======
+	google.golang.org/grpc v1.29.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
+master
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go/v12 v12.0.0
