@@ -119,7 +119,7 @@ renovate/k8s.io-klog-2.x
 =======
 	github.com/prometheus/common v0.31.1
 	github.com/stretchr/objx v0.2.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.0
+	go.etcd.io/etcd/api/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/sys b8560ed6a9b7
