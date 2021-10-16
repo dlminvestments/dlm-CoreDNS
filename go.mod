@@ -94,7 +94,7 @@ master
 	github.com/prometheus/common v0.31.1
 	github.com/prometheus/prometheus v2.30.3+incompatible
 	github.com/zeebo/bencode v1.0.0
-	go.etcd.io/etcd/v3 v3.5.0
+	go.etcd.io/etcd/v3 v3.5.1
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto 089bfa567519
 	golang.org/x/sys b8560ed6a9b7
