@@ -106,7 +106,7 @@ master
 	google.golang.org/grpc v1.41.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 master
-	k8s.io/api v0.22.2
+	k8s.io/api v0.22.3
 renovate/k8s.io-klog-2.x
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v0.22.2
@@ -126,7 +126,7 @@ renovate/k8s.io-klog-2.x
 	google.golang.org/api v0.59.0
 	google.golang.org/grpc v1.41.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
-	k8s.io/api v0.22.2
+	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog/v2 v2.30.0
