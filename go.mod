@@ -7,8 +7,13 @@ require (
  torrent
  torrent
 	github.com/Azure/azure-sdk-for-go/v59 v59.1.0
+renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
+	github.com/Azure/go-autorest/autorest v0.11.21
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
+=======
 	github.com/Azure/go-autorest/autorest v0.11.22
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
+master
 	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/anacrolix/torrent v1.35.0
@@ -33,8 +38,13 @@ traffic
 traffic
 	cloud.google.com/go v0.41.0 // indirect
 	github.com/Azure/azure-sdk-for-go/v59 v59.1.0
+renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
+	github.com/Azure/go-autorest/autorest v0.11.21
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
+=======
 	github.com/Azure/go-autorest/autorest v0.11.22
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
+master
 	github.com/DataDog/datadog-go v3.3.1+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
@@ -66,8 +76,13 @@ master
 	github.com/Azure/azure-sdk-for-go/v59 v59.1.0
 master
 master
+renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
+	github.com/Azure/go-autorest/autorest v0.11.21
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
+=======
 	github.com/Azure/go-autorest/autorest v0.11.22
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
+master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
