@@ -6,7 +6,11 @@ require (
  torrent
  torrent
  torrent
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
+	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.21
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
@@ -37,7 +41,11 @@ traffic
 traffic
 traffic
 	cloud.google.com/go v0.41.0 // indirect
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
+	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.21
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
@@ -66,14 +74,24 @@ master
 	github.com/googleapis/gnostic v0.2.0 // indirect
 master
 =======
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
+	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
+	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 =======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 master
+master
  torrent
 =======
 =======
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
+	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 master
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
