@@ -6,7 +6,11 @@ require (
  torrent
  torrent
  torrent
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
+	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.21
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
@@ -18,10 +22,10 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/anacrolix/torrent v1.38.0
 	github.com/apache/thrift v0.13.0 // indirect
-	github.com/aws/aws-sdk-go v1.42.12
+	github.com/aws/aws-sdk-go v1.42.19
 	github.com/caddyserver/caddy/v2 v2.4.6
 	github.com/cenkalti/backoff/v4 v4.1.2
-	github.com/cenkalti/rain v1.8.3
+	github.com/cenkalti/rain v1.8.4
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/golang/protobuf v1.5.2
@@ -37,7 +41,11 @@ traffic
 traffic
 traffic
 	cloud.google.com/go v0.41.0 // indirect
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
+	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.21
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.9
@@ -49,10 +57,10 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
-	github.com/aws/aws-sdk-go v1.42.12
+	github.com/aws/aws-sdk-go v1.42.19
 	github.com/caddyserver/caddy/v2 v2.4.6
 =======
-	github.com/aws/aws-sdk-go v1.42.12
+	github.com/aws/aws-sdk-go v1.42.19
 	github.com/caddyserver/caddy/v2 v2.4.6
 master
 	github.com/coredns/federation 019e06919f0c
@@ -66,14 +74,24 @@ master
 	github.com/googleapis/gnostic v0.2.0 // indirect
 master
 =======
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
 =======
 	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
+	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+=======
+	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 master
  torrent
 =======
 =======
+renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.0.0
+=======
+	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+master
 master
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
@@ -86,7 +104,7 @@ master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go v1.42.12
+	github.com/aws/aws-sdk-go v1.42.19
 	github.com/coredns/caddy/v2 v2.1.1
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
@@ -113,7 +131,7 @@ master
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto 089bfa567519
 	golang.org/x/sys b8560ed6a9b7
-	google.golang.org/api v0.60.0
+	google.golang.org/api v0.61.0
  renovate/google.golang.org-grpc-1.x
 	google.golang.org/grpc v1.42.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.34.0
@@ -138,7 +156,7 @@ renovate/k8s.io-klog-2.x
 	go.etcd.io/etcd/client/v3 v3.5.1
 	golang.org/x/crypto ceb1ce70b4fa
 	golang.org/x/sys b8560ed6a9b7
-	google.golang.org/api v0.60.0
+	google.golang.org/api v0.61.0
 	google.golang.org/grpc v1.42.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.34.0
 renovate/k8s.io-apimachinery-0.x
