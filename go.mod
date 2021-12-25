@@ -7,7 +7,7 @@ require (
  torrent
  torrent
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
-	github.com/Azure/azure-sdk-for-go/v60 v60.2.0
+	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 master
@@ -42,7 +42,7 @@ traffic
 traffic
 	cloud.google.com/go v0.41.0 // indirect
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
-	github.com/Azure/azure-sdk-for-go/v60 v60.2.0
+	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 master
@@ -75,9 +75,9 @@ master
 master
 =======
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
-	github.com/Azure/azure-sdk-for-go/v60 v60.2.0
+	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
-	github.com/Azure/azure-sdk-for-go/v60 v60.2.0
+	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 =======
@@ -88,7 +88,7 @@ master
 =======
 =======
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
-	github.com/Azure/azure-sdk-for-go/v60 v60.2.0
+	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
 	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
 master
