@@ -9,7 +9,7 @@ require (
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
-	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+	github.com/Azure/azure-sdk-for-go/v61 v61.0.0
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.23
@@ -44,7 +44,7 @@ traffic
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
-	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+	github.com/Azure/azure-sdk-for-go/v61 v61.0.0
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.23
@@ -79,9 +79,9 @@ renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 =======
 	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
-	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+	github.com/Azure/azure-sdk-for-go/v61 v61.0.0
 =======
-	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+	github.com/Azure/azure-sdk-for-go/v61 v61.0.0
 master
 master
  torrent
@@ -90,7 +90,7 @@ master
 renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 	github.com/Azure/azure-sdk-for-go/v60 v60.3.0
 =======
-	github.com/Azure/azure-sdk-for-go/v59 v59.4.0
+	github.com/Azure/azure-sdk-for-go/v61 v61.0.0
 master
 master
 master
