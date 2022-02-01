@@ -133,10 +133,10 @@ master
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.65.0
  renovate/google.golang.org-grpc-1.x
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.35.0
 =======
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.35.0
 master
 	k8s.io/api v0.23.2
@@ -157,7 +157,7 @@ renovate/k8s.io-klog-2.x
 	golang.org/x/crypto ceb1ce70b4fa
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.65.0
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.35.0
 renovate/k8s.io-apimachinery-0.x
 	k8s.io/api v0.23.2
