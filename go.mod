@@ -152,8 +152,13 @@ renovate/k8s.io-klog-2.x
 =======
 	github.com/prometheus/common v0.32.1
 	github.com/stretchr/objx v0.2.0 // indirect
+renovate/go.etcd.io-etcd-client-v3-3.x
+	go.etcd.io/etcd/api/v3 v3.5.1
+	go.etcd.io/etcd/client/v3 v3.5.2
+=======
 	go.etcd.io/etcd/api/v3 v3.5.2
 	go.etcd.io/etcd/client/v3 v3.5.1
+master
 	golang.org/x/crypto ceb1ce70b4fa
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.66.0
