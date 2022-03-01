@@ -13,7 +13,7 @@ jobs:
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Build
       run: go build -v ./...
@@ -36,7 +36,7 @@ jobs:
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Build
       run: go build -v ./...
@@ -56,7 +56,7 @@ jobs:
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Build
       run: go build -v ./...
@@ -76,7 +76,7 @@ jobs:
         sudo apt-get install make curl
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Test Makefile.release
       run:  make GITHUB_ACCESS_TOKEN=x -n release github-push -f Makefile.release
