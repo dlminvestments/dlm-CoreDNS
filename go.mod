@@ -22,7 +22,7 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/anacrolix/torrent v1.42.0
 	github.com/apache/thrift v0.13.0 // indirect
-	github.com/aws/aws-sdk-go v1.43.42
+	github.com/aws/aws-sdk-go v1.44.1
 	github.com/caddyserver/caddy/v2 v2.4.6
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/cenkalti/rain v1.8.8
@@ -57,10 +57,10 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
-	github.com/aws/aws-sdk-go v1.43.42
+	github.com/aws/aws-sdk-go v1.44.1
 	github.com/caddyserver/caddy/v2 v2.4.6
 =======
-	github.com/aws/aws-sdk-go v1.43.42
+	github.com/aws/aws-sdk-go v1.44.1
 	github.com/caddyserver/caddy/v2 v2.4.6
 master
 	github.com/coredns/federation 019e06919f0c
@@ -104,7 +104,7 @@ master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go v1.43.42
+	github.com/aws/aws-sdk-go v1.44.1
 	github.com/coredns/caddy/v2 v2.1.1
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
