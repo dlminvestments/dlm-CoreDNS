@@ -23,7 +23,7 @@ master
 	github.com/anacrolix/torrent v1.42.0
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.5
-	github.com/caddyserver/caddy/v2 v2.4.6
+	github.com/caddyserver/caddy/v2 v2.5.1
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/cenkalti/rain v1.8.8
 	github.com/dnstap/golang-dnstap v0.4.0
@@ -58,10 +58,10 @@ master
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
 	github.com/aws/aws-sdk-go v1.44.5
-	github.com/caddyserver/caddy/v2 v2.4.6
+	github.com/caddyserver/caddy/v2 v2.5.1
 =======
 	github.com/aws/aws-sdk-go v1.44.5
-	github.com/caddyserver/caddy/v2 v2.4.6
+	github.com/caddyserver/caddy/v2 v2.5.1
 master
 	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
@@ -131,7 +131,7 @@ master
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto 089bfa567519
 	golang.org/x/sys b8560ed6a9b7
-	google.golang.org/api v0.77.0
+	google.golang.org/api v0.78.0
  renovate/google.golang.org-grpc-1.x
 	google.golang.org/grpc v1.46.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1
@@ -139,13 +139,13 @@ master
 	google.golang.org/grpc v1.46.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1
 master
-	k8s.io/api v0.23.6
+	k8s.io/api v0.24.0
 renovate/k8s.io-klog-2.x
-	k8s.io/apimachinery v0.23.6
+	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v1.5.2
 	k8s.io/klog/v2 v2.60.1
 =======
-	k8s.io/apimachinery v0.23.6
+	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog v1.0.0
  master
@@ -161,15 +161,20 @@ renovate/go.etcd.io-etcd-client-v3-3.x
 master
 	golang.org/x/crypto ceb1ce70b4fa
 	golang.org/x/sys b8560ed6a9b7
+renovate/google.golang.org-grpc-1.x
 	google.golang.org/api v0.77.0
 	google.golang.org/grpc v1.46.0
+=======
+	google.golang.org/api v0.78.0
+	google.golang.org/grpc v1.45.0
+master
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1
 renovate/k8s.io-apimachinery-0.x
-	k8s.io/api v0.23.6
-	k8s.io/apimachinery v0.23.6
+	k8s.io/api v0.24.0
+	k8s.io/apimachinery v0.24.0
 =======
-	k8s.io/api v0.23.6
-	k8s.io/apimachinery v0.23.6
+	k8s.io/api v0.24.0
+	k8s.io/apimachinery v0.24.0
 master
 	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog/v2 v2.60.1
