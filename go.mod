@@ -124,7 +124,7 @@ master
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/client_model v0.2.0
  torrent
-	github.com/prometheus/common v0.35.0
+	github.com/prometheus/common v0.37.0
 	github.com/prometheus/prometheus v2.30.3+incompatible
 	github.com/zeebo/bencode v1.0.0
 	go.etcd.io/etcd/v3 v3.5.4
@@ -150,7 +150,7 @@ renovate/k8s.io-klog-2.x
 	k8s.io/klog v1.0.0
  master
 =======
-	github.com/prometheus/common v0.35.0
+	github.com/prometheus/common v0.37.0
 	github.com/stretchr/objx v0.2.0 // indirect
 renovate/go.etcd.io-etcd-client-v3-3.x
 	go.etcd.io/etcd/api/v3 v3.5.4
