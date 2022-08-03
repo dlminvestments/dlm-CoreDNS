@@ -1,6 +1,6 @@
 module github.com/coredns/coredns
 
-go 1.18
+go 1.19
 
 require (
  torrent
@@ -22,7 +22,7 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/anacrolix/torrent v1.46.0
 	github.com/apache/thrift v0.13.0 // indirect
-	github.com/aws/aws-sdk-go v1.44.66
+	github.com/aws/aws-sdk-go v1.44.68
 	github.com/caddyserver/caddy/v2 v2.5.2
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/cenkalti/rain v1.10.0
@@ -57,10 +57,10 @@ master
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
-	github.com/aws/aws-sdk-go v1.44.66
+	github.com/aws/aws-sdk-go v1.44.68
 	github.com/caddyserver/caddy/v2 v2.5.2
 =======
-	github.com/aws/aws-sdk-go v1.44.66
+	github.com/aws/aws-sdk-go v1.44.68
 	github.com/caddyserver/caddy/v2 v2.5.2
 master
 	github.com/coredns/federation 019e06919f0c
@@ -104,7 +104,7 @@ master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go v1.44.66
+	github.com/aws/aws-sdk-go v1.44.68
 	github.com/coredns/caddy/v2 v2.1.1
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
@@ -133,10 +133,10 @@ master
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.91.0
  renovate/google.golang.org-grpc-1.x
-	google.golang.org/grpc v1.46.0
+	google.golang.org/grpc v1.48.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.40.1
 =======
-	google.golang.org/grpc v1.46.0
+	google.golang.org/grpc v1.48.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.40.1
 master
 	k8s.io/api v0.24.3
@@ -162,11 +162,19 @@ master
 	golang.org/x/crypto ceb1ce70b4fa
 	golang.org/x/sys b8560ed6a9b7
 renovate/google.golang.org-grpc-1.x
+renovate/google.golang.org-api-0.x
 	google.golang.org/api v0.91.0
 	google.golang.org/grpc v1.46.0
 =======
 	google.golang.org/api v0.91.0
 	google.golang.org/grpc v1.45.0
+=======
+	google.golang.org/api v0.90.0
+	google.golang.org/grpc v1.48.0
+=======
+	google.golang.org/api v0.90.0
+	google.golang.org/grpc v1.48.0
+master
 master
 	gopkg.in/DataDog/dd-trace-go.v1 v1.40.1
 renovate/k8s.io-apimachinery-0.x
