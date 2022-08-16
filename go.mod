@@ -131,7 +131,7 @@ master
 	go.uber.org/zap v1.14.1 // indirect
 	golang.org/x/crypto 089bfa567519
 	golang.org/x/sys b8560ed6a9b7
-	google.golang.org/api v0.92.0
+	google.golang.org/api v0.93.0
  renovate/google.golang.org-grpc-1.x
 	google.golang.org/grpc v1.48.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.40.1
@@ -163,16 +163,16 @@ master
 	golang.org/x/sys b8560ed6a9b7
 renovate/google.golang.org-grpc-1.x
 renovate/google.golang.org-api-0.x
-	google.golang.org/api v0.92.0
+	google.golang.org/api v0.93.0
 	google.golang.org/grpc v1.46.0
 =======
-	google.golang.org/api v0.92.0
+	google.golang.org/api v0.93.0
 	google.golang.org/grpc v1.45.0
 =======
-	google.golang.org/api v0.92.0
+	google.golang.org/api v0.93.0
 	google.golang.org/grpc v1.48.0
 =======
-	google.golang.org/api v0.92.0
+	google.golang.org/api v0.93.0
 	google.golang.org/grpc v1.48.0
 master
 master
