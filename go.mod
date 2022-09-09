@@ -143,7 +143,7 @@ master
 renovate/k8s.io-klog-2.x
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v1.5.2
-	k8s.io/klog/v2 v2.80.0
+	k8s.io/klog/v2 v2.80.1
 =======
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go/v12 v12.0.0
@@ -199,6 +199,6 @@ renovate/k8s.io-apimachinery-0.x
 	k8s.io/apimachinery v0.25.0
 master
 	k8s.io/client-go/v12 v12.0.0
-	k8s.io/klog/v2 v2.80.0
+	k8s.io/klog/v2 v2.80.1
  master
 )
