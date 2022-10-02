@@ -142,7 +142,7 @@ master
 	k8s.io/api v0.25.2
 renovate/k8s.io-klog-2.x
 	k8s.io/apimachinery v0.25.2
-	k8s.io/client-go/v11 v11.0.0+incompatible
+	k8s.io/client-go/v11/v12 v12.0.0
 	k8s.io/klog/v2 v2.80.1
 =======
 	k8s.io/apimachinery v0.25.2
