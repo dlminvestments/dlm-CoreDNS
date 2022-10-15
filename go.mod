@@ -139,13 +139,13 @@ master
 	google.golang.org/grpc v1.50.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.0
 master
-	k8s.io/api v0.25.2
+	k8s.io/api v0.25.3
 renovate/k8s.io-klog-2.x
-	k8s.io/apimachinery v0.25.2
+	k8s.io/apimachinery v0.25.3
 	k8s.io/client-go/v11/v12 v12.0.0
 	k8s.io/klog/v2 v2.80.1
 =======
-	k8s.io/apimachinery v0.25.2
+	k8s.io/apimachinery v0.25.3
 	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog v1.0.0
  master
@@ -192,11 +192,11 @@ master
 master
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.0
 renovate/k8s.io-apimachinery-0.x
-	k8s.io/api v0.25.2
-	k8s.io/apimachinery v0.25.2
+	k8s.io/api v0.25.3
+	k8s.io/apimachinery v0.25.3
 =======
-	k8s.io/api v0.25.2
-	k8s.io/apimachinery v0.25.2
+	k8s.io/api v0.25.3
+	k8s.io/apimachinery v0.25.3
 master
 	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog/v2 v2.80.1
