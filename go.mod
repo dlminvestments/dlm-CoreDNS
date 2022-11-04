@@ -121,7 +121,7 @@ master
 	github.com/openzipkin/zipkin-go v0.4.1
 	github.com/oschwald/geoip2-golang v1.8.0
 	github.com/philhofer/fwd v1.1.1 // indirect
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/prometheus/client_model v0.3.0
  torrent
 	github.com/prometheus/common v0.37.0
