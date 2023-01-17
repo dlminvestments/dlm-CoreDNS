@@ -13,10 +13,10 @@ renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 =======
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 master
 	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
@@ -48,10 +48,10 @@ renovate/github.com-azure-azure-sdk-for-go-v59-60.x
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 =======
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 master
 	github.com/DataDog/datadog-go v3.3.1+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
@@ -96,10 +96,10 @@ master
 master
 renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 =======
 	github.com/Azure/go-autorest/autorest v0.11.28
-	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 master
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
