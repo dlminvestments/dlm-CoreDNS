@@ -1,66 +1,62 @@
-version: 2
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
 
-initWorkingDir: &initWorkingDir
-  type: shell
-  name: Initialize Working Directory
-  pwd: /
-  command: |
-    mkdir -p ~/go/src/${CIRCLE_PROJECT_USERNAME}/coredns
-    sudo chown -R circleci ~/go
-    mkdir -p ~/go/out/tests
-    mkdir -p ~/go/out/logs
-    mkdir -p /home/circleci/logs
-    GOROOT=$(go env GOROOT)
-    sudo rm -r $(go env GOROOT)
-    sudo mkdir $GOROOT
-    LATEST=$(curl -s https://golang.org/VERSION?m=text)
-    curl https://dl.google.com/go/${LATEST}.linux-amd64.tar.gz | sudo tar xz -C $GOROOT --strip-components=1
-
-integrationDefaults: &integrationDefaults
-  machine:
-    image: ubuntu-1604:201903-01
-  working_directory: ~/go/src/${CIRCLE_PROJECT_USERNAME}/coredns
-  environment:
-    - K8S_VERSION: v1.19.1
-    - KIND_VERSION: v0.9.0
-    - KUBECONFIG: /home/circleci/.kube/kind-config-kind
-
-setupKubernetes: &setupKubernetes
-  - run:
-      name: Setup Kubernetes
-      command: ~/go/src/${CIRCLE_PROJECT_USERNAME}/ci/build/kubernetes/k8s_setup.sh
-
-buildCoreDNSImage: &buildCoreDNSImage
-  - run:
-      name: Build latest CoreDNS Docker image
-      command: |
-        cd ~/go/src/${CIRCLE_PROJECT_USERNAME}/coredns
-        make coredns SYSTEM="GOOS=linux" && \
-        docker build -t coredns . && \
-        kind load docker-image coredns
-
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  kubernetes-tests:
-    <<: *integrationDefaults
+  say-hello:
+    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+    docker:
+      - image: cimg/base:stable
+    # Add steps to the job
+    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
-      - <<: *initWorkingDir
       - checkout
       - run:
-          name: Get CI repo
-          command : |
-            mkdir -p ~/go/src/${CIRCLE_PROJECT_USERNAME}/ci
-            git clone https://github.com/${CIRCLE_PROJECT_USERNAME}/ci ~/go/src/${CIRCLE_PROJECT_USERNAME}/ci
-      - <<: *setupKubernetes
-      - <<: *buildCoreDNSImage
-      - run:
-          name: Run Kubernetes tests
-          command: |
-            cd ~/go/src/${CIRCLE_PROJECT_USERNAME}/ci/test/kubernetes
-            go mod tidy
-            go test -v ./...
+          name: "Say hello"
+          command: "echo Hello, World!"
 
+# Invoke jobs via workflows
+# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  version: 2
-  integration-tests:
+  say-hello-workflow:
     jobs:
-      - kubernetes-tests
+      - say-hello
+
+
+build:
+     working_directory: ~/repo
+     docker:
+       - image: cimg/go:1.15.10
+     steps:
+       - checkout
+       - restore_cache:
+           keys:
+             - go-mod-v4-{{ checksum "go.sum" }}
+       - run:
+           name: Install Dependencies
+           command: go get ./...
+       - save_cache:
+           key: go-mod-v4-{{ checksum "go.sum" }}
+           paths:
+             - "/go/pkg/mod"
+       - run:
+           name: Run tests
+           command: go test -v
+
+build-medium:
+     machine:
+       image: ubuntu-2004:202101-01
+     resource_class: arm.medium
+steps:
+       - run: uname -a
+       - run: echo "Hello, Arm!"
+build-large:
+     machine:
+       image: ubuntu-2004:202101-01
+     resource_class: arm.large
+     steps:
+       - run: uname -a
+       - run: echo "Hello, Arm!"
