@@ -23,7 +23,7 @@ master
 	github.com/anacrolix/torrent v1.48.0
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.203
-	github.com/caddyserver/caddy/v2 v2.6.3
+	github.com/caddyserver/caddy/v2 v2.6.4
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cenkalti/rain v1.12.2
 	github.com/dnstap/golang-dnstap v0.4.0
@@ -58,10 +58,10 @@ master
 	github.com/apache/thrift v0.13.0 // indirect
 renovate/github.com-caddyserver-caddy-1.x
 	github.com/aws/aws-sdk-go v1.44.203
-	github.com/caddyserver/caddy/v2 v2.6.3
+	github.com/caddyserver/caddy/v2 v2.6.4
 =======
 	github.com/aws/aws-sdk-go v1.44.203
-	github.com/caddyserver/caddy/v2 v2.6.3
+	github.com/caddyserver/caddy/v2 v2.6.4
 master
 	github.com/coredns/federation 019e06919f0c
 	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
