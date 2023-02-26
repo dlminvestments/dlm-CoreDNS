@@ -115,7 +115,7 @@ master
 	github.com/infobloxopen/go-trees 66ceba885ebc
 master
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0
-	github.com/miekg/dns v1.1.50
+	github.com/miekg/dns v1.1.51
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.5.0
 	github.com/openzipkin/zipkin-go v0.4.1
