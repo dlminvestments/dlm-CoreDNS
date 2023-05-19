@@ -20,7 +20,7 @@ renovate/github.com-azure-go-autorest-autorest-azure-auth-0.x
 master
 	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
-	github.com/anacrolix/torrent v1.50.0
+	github.com/anacrolix/torrent v1.51.1
 	github.com/apache/thrift v0.13.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.263
 	github.com/caddyserver/caddy/v2 v2.6.4
