@@ -25,7 +25,7 @@ master
 	github.com/aws/aws-sdk-go v1.45.19
 	github.com/caddyserver/caddy/v2 v2.7.4
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/cenkalti/rain v1.12.8
+	github.com/cenkalti/rain v1.12.9
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/golang/protobuf v1.5.3
