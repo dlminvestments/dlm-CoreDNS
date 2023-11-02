@@ -153,10 +153,10 @@ renovate/k8s.io-klog-2.x
 	github.com/prometheus/common v0.45.0
 	github.com/stretchr/objx v0.2.0 // indirect
 renovate/go.etcd.io-etcd-client-v3-3.x
-	go.etcd.io/etcd/api/v3 v3.5.9
+	go.etcd.io/etcd/api/v3 v3.5.10
 	go.etcd.io/etcd/client/v3 v3.5.9
 =======
-	go.etcd.io/etcd/api/v3 v3.5.9
+	go.etcd.io/etcd/api/v3 v3.5.10
 	go.etcd.io/etcd/client/v3 v3.5.9
 master
 	golang.org/x/crypto ceb1ce70b4fa
