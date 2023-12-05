@@ -34,7 +34,7 @@ master
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/infobloxopen/go-trees 96a057b8dfb9
-	github.com/jackpal/bencode-go v1.0.0
+	github.com/jackpal/bencode-go v1.0.2
 	github.com/kr/pretty v0.2.0 // indirect
 =======
 traffic
