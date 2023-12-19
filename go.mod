@@ -133,10 +133,10 @@ master
 	golang.org/x/sys b8560ed6a9b7
 	google.golang.org/api v0.154.0
  renovate/google.golang.org-grpc-1.x
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.58.0
 =======
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.58.0
 master
 	k8s.io/api v0.28.4
@@ -165,28 +165,28 @@ renovate/google.golang.org-grpc-1.x
 renovate/google.golang.org-api-0.x
 renovate/google.golang.org-grpc-1.x
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 =======
 	google.golang.org/api v0.154.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 master
 master
 master
