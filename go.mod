@@ -143,11 +143,11 @@ master
 renovate/k8s.io-klog-2.x
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go/v11/v12 v12.0.0
-	k8s.io/klog/v2 v2.110.1
+	k8s.io/klog/v2 v2.120.1
 =======
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go/v12 v12.0.0
-	k8s.io/klog/v2 v2.110.1
+	k8s.io/klog/v2 v2.120.1
  master
 =======
 	github.com/prometheus/common v0.45.0
@@ -199,6 +199,6 @@ renovate/k8s.io-apimachinery-0.x
 	k8s.io/apimachinery v0.29.0
 master
 	k8s.io/client-go/v12 v12.0.0
-	k8s.io/klog/v2 v2.110.1
+	k8s.io/klog/v2 v2.120.1
  master
 )
